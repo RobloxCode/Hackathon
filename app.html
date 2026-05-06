@@ -174,6 +174,36 @@
             // Oculta el modal
             document.getElementById('cupon-modal').style.display = 'none';
         }
+
+        // Lógica para detectar escaneo al cargar la página
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idNegocioScaneado = urlParams.get('scan');
+
+    if (idNegocioScaneado) {
+        // 1. Verificar si hay un usuario logueado
+        const user = auth.currentUser; 
+        if (user) {
+            try {
+                // 2. Registrar la visita en una colección global "visitas"
+                const nuevaVisita = {
+                    id_negocio: idNegocioScaneado,
+                    id_cliente: user.uid,
+                    fecha: new Date().toISOString(),
+                    nombre_cliente: localStorage.getItem('userName') || "Cliente Anónimo"
+                };
+                
+                await addDoc(collection(db, "visitas"), nuevaVisita);
+                alert("¡Visita registrada con éxito! Has ganado puntos.");
+            } catch (e) {
+                console.error("Error al registrar visita: ", e);
+            }
+        } else {
+            alert("Por favor, inicia sesión para registrar tu visita y ganar puntos.");
+            window.location.href = 'auth.html';
+        }
+    }
+});
     </script>
 </body>
 </html>
