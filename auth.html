@@ -165,7 +165,13 @@
             localStorage.setItem('sesionActiva', rol);
             
             setTimeout(() => {
-                window.location.href = rol === 'admin' ? 'estadisticas_vendedor.html' : 'app.html';
+                if (rol === 'admin') {
+                    // Abre las estadísticas del vendedor en una pestaña nueva
+                    window.open('estadisticas_vendedor.html', '_blank');
+                } else {
+                    // Abre el catálogo para el turista en la misma pestaña
+                    window.location.href = 'app.html';
+                }
             }, 1500); // 1.5 segundos de pausa para que lea el mensaje de éxito
         }
 
