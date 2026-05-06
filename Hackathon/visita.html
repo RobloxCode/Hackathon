@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesoros de Morelia - Bienvenido</title>
+    <style>
+        :root {
+            --rojo-vino: #7F2020;
+            --verde-salvia: #869B7E;
+            --oliva-claro: #C9CAAC;
+            --hueso: #F6F3EB;
+            --texto-oscuro: #2c3e50;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--hueso);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 12px 40px rgba(127,32,32,0.15);
+            border-top: 6px solid var(--rojo-vino);
+        }
+        .emoji-ring {
+            width: 90px; height: 90px;
+            background: #fdf0f0;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 44px;
+            margin: 0 auto 20px;
+            border: 3px solid #f0c8c8;
+        }
+        h1 { font-size: 22px; color: var(--rojo-vino); margin-bottom: 6px; }
+        .negocio-nombre {
+            font-size: 26px; font-weight: 800;
+            color: var(--texto-oscuro);
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .desc {
+            font-size: 14px; color: #7f8c8d;
+            margin-bottom: 28px; line-height: 1.6;
+        }
+        .estado {
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .estado.loading { background: #f0f0e4; color: var(--texto-oscuro); }
+        .estado.success { background: #d5f5e3; color: #1e8449; }
+        .estado.error   { background: #fadbd8; color: #c0392b; }
+        .spinner {
+            display: inline-block;
+            width: 18px; height: 18px;
+            border: 3px solid #ccc;
+            border-top-color: var(--rojo-vino);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-ir {
+            background: var(--rojo-vino);
+            color: white; border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer; width: 100%;
+            transition: background .2s;
+            display: none;
+        }
+        .btn-ir:hover { background: #5c1616; }
+        .promo-badge {
+            display: inline-block;
+            background: var(--oliva-claro);
+            color: var(--rojo-vino);
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .footer { margin-top: 30px; font-size: 12px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="emoji-ring">🏪</div>
+    <h1>¡Bienvenido a</h1>
+    <div class="negocio-nombre" id="nombre-negocio">Cargando...</div>
+    <div class="promo-badge" id="promo-negocio" style="display:none;"></div>
+    <p class="desc">Tu visita ha sido registrada. ¡Explora las promociones exclusivas para ti!</p>
+    
+    <div class="estado loading" id="estado-box">
+        <span class="spinner"></span> Registrando tu visita...
+    </div>
+
+    <button class="btn-ir" id="btn-catalogo" onclick="irAlCatalogo()">
+        Ver catálogo completo →
+    </button>
+</div>
+
+<div class="footer">Tesoros de Morelia · Red Local</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
+        authDomain: "hackathon-c1121.firebaseapp.com",
+        projectId: "hackathon-c1121",
+        storageBucket: "hackathon-c1121.firebasestorage.app",
+        messagingSenderId: "794762493985",
+        appId: "1:794762493985:web:6f3c9dfef332f1f34ea360"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Datos de negocios (mismo array que app.html)
+    const negocios = [
+        { id: 1, nombre: "Gazpachos El Boulevard", promo: "10% de descuento en mediano" },
+        { id: 2, nombre: "Café de las Rosas",       promo: "Café de olla gratis" },
+        { id: 3, nombre: "Artesanías Don Vasco",    promo: "Llavero artesanal de regalo" },
+        { id: 4, nombre: "Tacos El Güero",          promo: "3x2 en tacos de pastor" },
+        { id: 5, nombre: "Hotel Virrey de Mendoza", promo: "15% en tu primera noche" },
+        { id: 6, nombre: "Museo Casa de Morelos",   promo: "Entrada 2x1 a estudiantes" }
+    ];
+
+    // Leer parámetro ?negocio=ID de la URL
+    const params  = new URLSearchParams(window.location.search);
+    const negocioId = parseInt(params.get('negocio'));
+    const negocio   = negocios.find(n => n.id === negocioId);
+
+    const estadoBox   = document.getElementById('estado-box');
+    const btnCatalogo = document.getElementById('btn-catalogo');
+
+    if (!negocio) {
+        document.getElementById('nombre-negocio').textContent = 'Negocio no encontrado';
+        estadoBox.className = 'estado error';
+        estadoBox.textContent = '❌ QR inválido o negocio no registrado.';
+    } else {
+        document.getElementById('nombre-negocio').textContent = negocio.nombre;
+        const promoBadge = document.getElementById('promo-negocio');
+        promoBadge.textContent = '🎁 ' + negocio.promo;
+        promoBadge.style.display = 'inline-block';
+
+        registrarVisita(negocio);
+    }
+
+    async function registrarVisita(negocio) {
+        try {
+            const negocioKey = 'negocio_' + negocio.id;
+
+            // 1. Registrar visita individual en subcolección
+            await addDoc(collection(db, 'negocios', negocioKey, 'visitas'), {
+                negocioId:     negocio.id,
+                negocioNombre: negocio.nombre,
+                timestamp:     serverTimestamp(),
+                userAgent:     navigator.userAgent,
+                // IP se puede obtener desde el servidor; desde cliente no está disponible
+                referrer:      document.referrer || 'directo'
+            });
+
+            // 2. Incrementar contador en el documento raíz del negocio
+            const negocioRef = doc(db, 'negocios', negocioKey);
+            const snap = await getDoc(negocioRef);
+            if (snap.exists()) {
+                await updateDoc(negocioRef, { totalVisitas: increment(1) });
+            } else {
+                await setDoc(negocioRef, {
+                    negocioId:     negocio.id,
+                    negocioNombre: negocio.nombre,
+                    totalVisitas:  1
+                });
+            }
+
+            estadoBox.className = 'estado success';
+            estadoBox.textContent = '✅ ¡Visita registrada! El negocio ya sabe que llegaste.';
+            btnCatalogo.style.display = 'block';
+
+        } catch (err) {
+            console.error(err);
+            estadoBox.className = 'estado error';
+            estadoBox.textContent = '⚠️ No se pudo registrar, pero puedes seguir explorando.';
+            btnCatalogo.style.display = 'block';
+        }
+    }
+
+    window.irAlCatalogo = function() {
+        window.location.href = 'app.html';
+    };
+</script>
+
+</body>
+</html>
