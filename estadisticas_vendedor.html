@@ -6,6 +6,8 @@
 <title>Mi Negocio+ · Vendedor</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.49.0/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
 /* ══════════════════════════════════════════
    TOKENS
@@ -620,12 +622,11 @@ textarea { resize:vertical; min-height:80px; }
 
 <div class="app-shell">
 
-  <!-- ══ SIDEBAR ══ -->
   <nav class="sidebar">
     <div class="sidebar-brand">
       <div class="sb-logo">🛍️</div>
       <div class="sb-name">Mi Negocio+</div>
-      <div class="sb-biz">Taquería El Güero</div>
+      <div class="sb-biz" id="side-biz-name">Taquería El Güero</div>
     </div>
 
     <div class="sb-nav">
@@ -654,15 +655,13 @@ textarea { resize:vertical; min-height:80px; }
     </div>
   </nav>
 
-  <!-- ══ MAIN ══ -->
   <div class="main">
 
-    <!-- ─── DASHBOARD ─── -->
     <div id="s-dashboard" class="screen active">
       <div class="topbar">
         <div class="topbar-row">
           <div>
-            <div class="biz-lbl">Taquería El Güero</div>
+            <div class="biz-lbl" id="top-biz-name">Taquería El Güero</div>
             <div class="biz-nm">Panel de hoy</div>
           </div>
           <div class="tb-actions">
@@ -672,11 +671,11 @@ textarea { resize:vertical; min-height:80px; }
         </div>
         <div class="stats-strip">
           <div class="stat-pill">
-            <div class="sp-val">$3,840</div>
+            <div class="sp-val" id="stat-ventas">$3,840</div>
             <div class="sp-lbl">Ventas hoy</div>
           </div>
           <div class="stat-pill">
-            <div class="sp-val">47</div>
+            <div class="sp-val" id="stat-clientes">47</div>
             <div class="sp-lbl">Clientes</div>
           </div>
           <div class="stat-pill">
@@ -688,7 +687,6 @@ textarea { resize:vertical; min-height:80px; }
       </div>
 
       <div class="content">
-        <!-- Mini sparkline -->
         <div class="chart-box" style="margin-bottom:18px; padding:14px 14px 2px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
             <div>
@@ -725,40 +723,25 @@ textarea { resize:vertical; min-height:80px; }
               <div class="qa-icon" style="background:var(--gold-lt);">🎁</div>
               <div class="qa-lbl">Canjear punto</div>
             </div>
-            <div class="qa-card" onclick="goScreen('analysis',null)">
-              <div class="qa-icon" style="background:var(--cr-lt);">📊</div>
-              <div class="qa-lbl">Reporte</div>
+            <div class="qa-card" onclick="abrirMiQR()">
+              <div class="qa-icon" style="background:var(--sg-lt);">📱</div>
+              <div class="qa-lbl">Mi Código QR</div>
             </div>
           </div>
         </div>
 
         <div class="sec">
           <div class="sec-hdr">
-            <div class="sec-title">Clientes recientes</div>
+            <div class="sec-title">Clientes recientes (En vivo)</div>
             <span class="see-all" onclick="goScreen('clients',null)">Ver todos</span>
           </div>
-          <div class="cl-list">
-            <div class="cl-row">
-              <div class="cl-av" style="background:var(--cr-lt);color:var(--cr);">MA</div>
-              <div class="cl-info"><div class="cl-name">María Ávila</div><div class="cl-meta">Hoy 2:30 pm · $90</div></div>
-              <span class="badge badge-pts">+45 pts</span>
-            </div>
-            <div class="cl-row">
-              <div class="cl-av" style="background:var(--sg-lt);color:var(--sg-dk);">JR</div>
-              <div class="cl-info"><div class="cl-name">Juan Ramírez</div><div class="cl-meta">Hoy 1:15 pm · $145</div></div>
-              <span class="badge badge-pts">+72 pts</span>
-            </div>
-            <div class="cl-row">
-              <div class="cl-av" style="background:var(--gold-lt);color:var(--gold);">LM</div>
-              <div class="cl-info"><div class="cl-name">Lucía Morales</div><div class="cl-meta">Hoy 12:40 pm · $68</div></div>
-              <span class="badge badge-cnje">Canjeó</span>
-            </div>
+          <div class="cl-list" id="lista-clientes-real">
+             <p style="font-size:13px; color:var(--tx3); padding:10px;">Cargando visitas recientes...</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ─── ANALYSIS ─── -->
     <div id="s-analysis" class="screen">
       <div class="an-topbar">
         <div class="an-title">Análisis</div>
@@ -805,7 +788,6 @@ textarea { resize:vertical; min-height:80px; }
       </div>
     </div>
 
-    <!-- ─── IA ─── -->
     <div id="s-ia" class="screen">
       <div class="ia-topbar">
         <div class="ia-av">🤖</div>
@@ -865,7 +847,6 @@ textarea { resize:vertical; min-height:80px; }
       </div>
     </div>
 
-    <!-- ─── CLIENTS ─── -->
     <div id="s-clients" class="screen">
       <div class="topbar">
         <div class="topbar-row">
@@ -887,7 +868,6 @@ textarea { resize:vertical; min-height:80px; }
       </div>
     </div>
 
-    <!-- ── MOBILE NAV ── -->
     <nav class="mobile-nav">
       <div class="mn-item active" id="mn-dashboard" onclick="goScreen('dashboard',null)"><span class="mn-icon">🏠</span><span class="mn-lbl">Inicio</span></div>
       <div class="mn-item" id="mn-clients" onclick="goScreen('clients',null)"><span class="mn-icon">👥</span><span class="mn-lbl">Clientes</span></div>
@@ -895,12 +875,8 @@ textarea { resize:vertical; min-height:80px; }
       <div class="mn-item" id="mn-ia" onclick="goScreen('ia',null)"><span class="mn-icon">🤖</span><span class="mn-lbl">Asistente</span></div>
     </nav>
 
-  </div><!-- /main -->
-</div><!-- /app-shell -->
-
-<!-- ══════════════════════════════════════════
-     MODAL: REGISTRAR VENTA
-══════════════════════════════════════════ -->
+  </div></div>
+  
 <div class="modal-overlay" id="modal-venta">
   <div class="modal" id="modal-venta-inner">
     <div class="modal-drag"></div>
@@ -912,7 +888,6 @@ textarea { resize:vertical; min-height:80px; }
       <button class="close-btn" onclick="closeModal('modal-venta')">✕</button>
     </div>
 
-    <!-- Step 1: Products -->
     <div id="venta-step1">
       <div class="form-group">
         <label class="fl">Buscar cliente (opcional)</label>
@@ -993,7 +968,6 @@ textarea { resize:vertical; min-height:80px; }
       <button class="btn-submit" onclick="submitVenta()">Confirmar venta →</button>
     </div>
 
-    <!-- Success step -->
     <div id="venta-success" style="display:none;" class="success-state">
       <div class="success-ring">✅</div>
       <div class="success-title">¡Venta registrada!</div>
@@ -1003,9 +977,6 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     MODAL: ENVIAR PROMO
-══════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-promo">
   <div class="modal">
     <div class="modal-drag"></div>
@@ -1079,9 +1050,6 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     MODAL: CANJEAR PUNTOS
-══════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-canje">
   <div class="modal">
     <div class="modal-drag"></div>
@@ -1145,7 +1113,30 @@ textarea { resize:vertical; min-height:80px; }
   </div>
 </div>
 
-<!-- TOAST -->
+<div class="modal-overlay" id="modal-mi-qr">
+  <div class="modal" style="text-align: center;">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr" style="justify-content: center; position: relative;">
+      <div>
+        <div class="modal-title">Tu Código QR</div>
+        <div class="modal-subtitle">Los clientes deben escanear esto al visitarte</div>
+      </div>
+      <button class="close-btn" style="position: absolute; right: 0; top: 0;" onclick="closeModal('modal-mi-qr')">✕</button>
+    </div>
+
+    <div id="contenedor-qr" style="display: flex; justify-content: center; margin: 20px 0; padding: 20px; background: white; border-radius: 16px; border: 2px dashed var(--st);"></div>
+    
+    <div class="pts-preview" style="justify-content: center; margin-bottom: 20px;">
+      <span class="pts-ico">💡</span>
+      <div class="pts-info">
+        <div class="pts-main">Imprime este código y ponlo en tu caja</div>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="closeModal('modal-mi-qr')">Cerrar</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1298,7 +1289,6 @@ function initChartNuevosRecurrentes() {
 
 /* ── Render charts when analysis screen becomes active ── */
 function renderAnalysisCharts() {
-  // slight delay to ensure DOM is painted
   setTimeout(() => {
     initChartVentasDia();
     initChartProductos();
@@ -1494,10 +1484,122 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ── INIT on load ── */
+/* ── NUEVA FUNCIÓN: GENERAR MI QR ── */
+function abrirMiQR() {
+  openModal('modal-mi-qr');
+  document.getElementById("contenedor-qr").innerHTML = "";
+  
+  // Obtenemos la información de quién inició sesión
+  const infoRaw = localStorage.getItem('negocioActivo');
+  let idNegocio = "LOCAL_GENERICO";
+  
+  if(infoRaw) {
+      const negocio = JSON.parse(infoRaw);
+      idNegocio = negocio.id;
+  }
+  
+  // Generamos el enlace para el escáner
+  let urlDelNegocio = "https://hackathon-c1121.web.app/app.html?scan=" + idNegocio;
+  
+  new QRCode(document.getElementById("contenedor-qr"), {
+    text: urlDelNegocio,
+    width: 220,
+    height: 220,
+    colorDark : "#7F2020",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.H
+  });
+}
+
+/* ── INIT on load Y CARGA DE NOMBRES ── */
 document.addEventListener('DOMContentLoaded', () => {
   initSparkline();
+  
+  // Leemos quién inició sesión para cambiar los títulos
+  const infoRaw = localStorage.getItem('negocioActivo');
+  if (infoRaw) {
+      const negocio = JSON.parse(infoRaw);
+      
+      // Actualizar nombres y logos en tu diseño
+      document.getElementById('side-biz-name').textContent = negocio.nombre;
+      document.getElementById('top-biz-name').textContent = negocio.nombre;
+      
+      const sbLogo = document.querySelector('.sb-logo');
+      if(sbLogo) sbLogo.textContent = negocio.logo;
+
+      const statVentas = document.getElementById('stat-ventas');
+      const statClientes = document.getElementById('stat-clientes');
+      if(statVentas) statVentas.textContent = negocio.ventas;
+      if(statClientes) statClientes.textContent = negocio.clientes;
+
+      // Disparamos un evento para avisarle a Firebase de quién vamos a buscar los clientes
+      window.idDelNegocioLogueado = negocio.id;
+      document.dispatchEvent(new Event('negocioListo'));
+  }
 });
 </script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
+    authDomain: "hackathon-c1121.firebaseapp.com",
+    projectId: "hackathon-c1121",
+    storageBucket: "hackathon-c1121.firebasestorage.app",
+    messagingSenderId: "794762493985",
+    appId: "1:794762493985:web:6f3c9dfef332f1f34ea360"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Esperamos a que tu otro script cargue los datos del negocio
+  document.addEventListener('negocioListo', () => {
+      const idNegocio = window.idDelNegocioLogueado;
+      if(!idNegocio) return;
+
+      // Hacemos la consulta a la base de datos
+      const q = query(
+        collection(db, "visitas"), 
+        where("id_negocio", "==", idNegocio),
+        orderBy("fecha", "desc"),
+        limit(5)
+      );
+
+      // onSnapshot se queda "escuchando" cambios en vivo
+      onSnapshot(q, (snapshot) => {
+        const contenedor = document.getElementById('lista-clientes-real');
+        if(!contenedor) return;
+        
+        contenedor.innerHTML = ""; // Limpiamos la lista
+
+        if (snapshot.empty) {
+          contenedor.innerHTML = "<p style='font-size:13px; color:var(--tx3); padding:10px;'>Aún no hay clientes registrados hoy.</p>";
+          return;
+        }
+
+        // Por cada cliente que visitó, dibujamos tu tarjeta original
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const nombre = data.nombre_cliente || "Cliente";
+          const iniciales = nombre.substring(0,2).toUpperCase();
+          
+          contenedor.innerHTML += `
+            <div class="cl-row">
+              <div class="cl-av" style="background:var(--cr-lt);color:var(--cr);">${iniciales}</div>
+              <div class="cl-info">
+                <div class="cl-name">${nombre}</div>
+                <div class="cl-meta">Visitó recientemente</div>
+              </div>
+              <span class="badge badge-pts">+10 pts</span>
+            </div>
+          `;
+        });
+      });
+  });
+</script>
+
 </body>
 </html>
