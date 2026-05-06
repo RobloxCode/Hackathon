@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesoros de Morelia - Mapa y Catálogo</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* PALETA DE COLORES */
+        :root {
+            --rojo-vino: #7F2020;
+            --verde-salvia: #869B7E;
+            --oliva-claro: #C9CAAC;
+            --hueso: #F6F3EB;
+            --texto-oscuro: #2c3e50;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--hueso); color: var(--texto-oscuro); }
+        
+        /* ENCABEZADO */
+        .header { 
+            background-color: var(--rojo-vino); 
+            padding: 25px; 
+            text-align: center; 
+            color: white; 
+            border-bottom: 6px solid var(--verde-salvia); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .header h1 { margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: 2px; }
+        .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+
+        /* MAPA */
+        #mapa-container {
+            height: 350px;
+            width: 100%;
+            border-bottom: 4px solid var(--oliva-claro);
+            z-index: 1;
+        }
+
+        /* FILTROS */
+        .filtros { 
+            display: flex; justify-content: center; gap: 10px; padding: 15px; 
+            background: white; position: sticky; top: 0; z-index: 10; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap;
+        }
+        .btn-filtro { 
+            background: white; border: 2px solid var(--oliva-claro); 
+            padding: 8px 18px; border-radius: 20px; cursor: pointer; 
+            color: var(--verde-salvia); font-weight: bold; transition: 0.3s;
+        }
+        .btn-filtro.active { background: var(--rojo-vino); color: white; border-color: var(--rojo-vino); }
+
+        /* GRID MASONRY ARREGLADO */
+        .masonry-grid { 
+            columns: 3; 
+            column-gap: 20px; 
+            padding: 25px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+
+        .card {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06); 
+            display: inline-block; /* Crucial para evitar deformación */
+            width: 100%; 
+            margin-bottom: 20px;
+            break-inside: avoid; /* EVITA QUE LA TARJETA SE CORTA A LA MITAD */
+            page-break-inside: avoid;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(127, 32, 32, 0.15); }
+        
+        .card img { 
+            width: 100%; 
+            height: 200px; /* Altura controlada */
+            object-fit: cover; /* Evita que la foto se estire feo */
+            display: block; 
+        }
+        
+        .card-content { padding: 18px; }
+        .card-content h3 { margin: 0; font-size: 19px; color: var(--rojo-vino); }
+        
+        .categoria { font-size: 12px; color: var(--verde-salvia); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        
+        .promo-tag {
+            background-color: var(--oliva-claro); color: var(--rojo-vino);
+            padding: 6px 12px; border-radius: 6px; font-weight: bold;
+            font-size: 13px; margin: 12px 0; display: inline-block;
+        }
+        
+        /* BOTONES ALINEADOS */
+        .card-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { 
+            border: none; padding: 10px; border-radius: 6px; font-weight: bold; 
+            cursor: pointer; flex: 1; text-align: center; text-decoration: none; 
+            font-size: 13px; transition: 0.3s;
+        }
+        .btn-mapa { background-color: var(--verde-salvia); color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-mapa:hover { background-color: #6a7c62; }
+        .btn-claim { background-color: var(--rojo-vino); color: white; }
+        .btn-claim:hover { background-color: #5c1616; }
+
+        @media (max-width: 900px) { .masonry-grid { columns: 2; } }
+        @media (max-width: 600px) { .masonry-grid { columns: 1; padding: 15px; } #mapa-container { height: 250px; } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Tesoros de Morelia</h1>
+        <p>Vive la tradición. Consume local.</p>
+    </div>
+
+    <div id="mapa-container"></div>
+
+    <div class="filtros">
+        <button class="btn-filtro active">Todos</button>
+        <button class="btn-filtro">Gastronomía</button>
+        <button class="btn-filtro">Artesanías</button>
+        <button class="btn-filtro">Servicios</button>
+    </div>
+
+    <div class="masonry-grid" id="catalogo"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // 1. Inicializar el mapa en el Centro de Morelia
+        const map = L.map('mapa-container').setView([19.7027, -101.1923], 15);
+
+        // 2. Capa visual de OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // 3. Base de datos con lista completa y coordenadas reales de prueba
+        const negocios = [
+            { id: 1, nombre: "Gazpachos El Boulevard", categoria: "Gastronomía", promo: "10% de descuento en mediano", lat: 19.7042, lng: -101.1915, img: "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=500&q=80" },
+            { id: 2, nombre: "Café de las Rosas", categoria: "Gastronomía", promo: "Café de olla gratis", lat: 19.7055, lng: -101.1940, img: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80" },
+            { id: 3, nombre: "Artesanías Don Vasco", categoria: "Artesanías", promo: "Llavero artesanal de regalo", lat: 19.7015, lng: -101.1930, img: "https://images.unsplash.com/photo-1606041011872-5965904f40d4?w=500&q=80" },
+            { id: 4, nombre: "Tacos El Güero", categoria: "Gastronomía", promo: "3x2 en tacos de pastor", lat: 19.7065, lng: -101.1890, img: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=500&q=80" },
+            { id: 5, nombre: "Hotel Virrey de Mendoza", categoria: "Servicios", promo: "15% en tu primera noche", lat: 19.7025, lng: -101.1950, img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=80" },
+            { id: 6, nombre: "Museo Casa de Morelos", categoria: "Servicios", promo: "Entrada 2x1 a estudiantes", lat: 19.7010, lng: -101.1900, img: "https://images.unsplash.com/photo-1582559937958-6933cceac135?w=500&q=80" }
+        ];
+
+        const container = document.getElementById('catalogo');
+
+        negocios.forEach(n => {
+            // A. Agregar marcador al mapa
+            const marker = L.marker([n.lat, n.lng]).addTo(map);
+            marker.bindPopup(`<b>${n.nombre}</b><br>${n.promo}`);
+
+            // B. Crear tarjeta en el grid
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${n.img}" alt="${n.nombre}">
+                <div class="card-content">
+                    <span class="categoria">${n.categoria}</span>
+                    <h3>${n.nombre}</h3>
+                    <div class="promo-tag">${n.promo}</div>
+                    
+                    <div class="card-actions">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${n.lat},${n.lng}" target="_blank" class="btn btn-mapa">
+                            🗺️ Cómo llegar
+                        </a>
+                        <button class="btn btn-claim">Ver Promo</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        // Detectar ubicación del usuario (Pide permiso al navegador)
+        map.locate({setView: true, maxZoom: 15});
+        map.on('locationfound', function(e) {
+            L.circle(e.latlng, {radius: 150, color: '#7F2020', fillColor: '#7F2020', fillOpacity: 0.2}).addTo(map)
+             .bindPopup("Estás aquí").openPopup();
+        });
+    </script>
+</body>
+</html>
