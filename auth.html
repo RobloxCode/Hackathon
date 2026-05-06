@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Red Local Morelia</title>
     <style>
-        /* NUEVA PALETA DE COLORES */
         :root {
             --rojo-vino: #7F2020;
             --verde-salvia: #869B7E;
@@ -40,6 +39,11 @@
         <h2 id="titulo-form">Iniciar Sesión</h2>
         <p id="subtitulo-form">Ingresa con tu correo y contraseña.</p>
         
+        <div id="campos-registro" class="hidden">
+            <input type="text" id="nombre" placeholder="Nombre(s)">
+            <input type="text" id="apellido" placeholder="Apellidos">
+        </div>
+
         <input type="email" id="correo" placeholder="Correo electrónico">
         <input type="password" id="password" placeholder="Contraseña">
         
@@ -62,7 +66,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Tus llaves reales del proyecto Hackathon
         const firebaseConfig = {
             apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
             authDomain: "hackathon-c1121.firebaseapp.com",
@@ -73,7 +76,6 @@
             measurementId: "G-DGSZRMG33B"
         };
 
-        // Inicializar la aplicación, autenticación y base de datos
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -82,18 +84,29 @@
         
         const titulo = document.getElementById('titulo-form');
         const subtitulo = document.getElementById('subtitulo-form');
+        const camposRegistro = document.getElementById('campos-registro');
         const selectorRol = document.getElementById('rol-registro');
         const btnAccion = document.getElementById('btn-accion');
         const btnToggle = document.getElementById('btn-toggle');
         const msgStatus = document.getElementById('msg-status');
 
-        // Alternar entre Iniciar Sesión y Crear Cuenta
+        // Datos maestros de los 6 locales para simulación visual
+        const baseDeDatosNegocios = {
+            "admin@boulevard.com": { id: "NEG_01", nombre: "Gazpachos El Boulevard", logo: "🍹", ventas: "$4,200", clientes: 52 },
+            "admin@rosas.com": { id: "NEG_02", nombre: "Café de las Rosas", logo: "☕", ventas: "$1,850", clientes: 34 },
+            "admin@donvasco.com": { id: "NEG_03", nombre: "Artesanías Don Vasco", logo: "🏺", ventas: "$5,300", clientes: 18 },
+            "admin@guero.com": { id: "NEG_04", nombre: "Tacos El Güero", logo: "🌮", ventas: "$3,840", clientes: 47 },
+            "admin@virrey.com": { id: "NEG_05", nombre: "Hotel Virrey de Mendoza", logo: "🏨", ventas: "$12,400", clientes: 12 },
+            "admin@museo.com": { id: "NEG_06", nombre: "Museo Casa de Morelos", logo: "🏛️", ventas: "$2,100", clientes: 85 }
+        };
+
         btnToggle.addEventListener('click', () => {
             msgStatus.style.display = 'none';
             if (modoActual === 'login') {
                 modoActual = 'registro';
                 titulo.innerText = 'Crear Cuenta';
                 subtitulo.innerText = 'Únete para obtener o crear promociones.';
+                camposRegistro.classList.remove('hidden');
                 selectorRol.classList.remove('hidden');
                 btnAccion.innerText = 'Registrarme';
                 btnToggle.innerText = '¿Ya tienes cuenta? Inicia sesión';
@@ -101,13 +114,13 @@
                 modoActual = 'login';
                 titulo.innerText = 'Iniciar Sesión';
                 subtitulo.innerText = 'Ingresa con tu correo y contraseña.';
+                camposRegistro.classList.add('hidden');
                 selectorRol.classList.add('hidden');
                 btnAccion.innerText = 'Entrar';
                 btnToggle.innerText = '¿No tienes cuenta? Regístrate';
             }
         });
 
-        // Procesar el formulario (Registro o Login)
         btnAccion.addEventListener('click', async () => {
             const email = document.getElementById('correo').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -119,13 +132,22 @@
 
             try {
                 if (modoActual === 'registro') {
-                    // 1. Crear el usuario en Firebase Authentication
-                    const rol = document.getElementById('rol-registro').value;
+                    const nombre = document.getElementById('nombre').value.trim();
+                    const apellido = document.getElementById('apellido').value.trim();
+                    const rol = selectorRol.value;
+
+                    if (!nombre || !apellido) {
+                        mostrarMensaje('Nombre y apellido requeridos', 'error');
+                        return;
+                    }
+
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
-                    // 2. Guardar su rol en la base de datos Firestore
+                    // Guardar perfil completo en Firestore
                     await setDoc(doc(db, "usuarios", user.uid), {
+                        nombre: nombre,
+                        apellido: apellido,
                         correo: email,
                         rol: rol
                     });
@@ -134,45 +156,39 @@
                     redirigir(rol);
 
                 } else {
-                    // 1. Iniciar sesión
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
-                    // 2. Leer su rol desde la base de datos para saber a dónde mandarlo
                     const docSnap = await getDoc(doc(db, "usuarios", user.uid));
                     if (docSnap.exists()) {
-                        const datosUsuario = docSnap.data();
+                        const datos = docSnap.data();
+                        
+                        // Si es admin, guardamos el contexto del negocio
+                        if (datos.rol === 'admin') {
+                            const infoNegocio = baseDeDatosNegocios[email] || { 
+                                id: user.uid, nombre: "Nuevo Negocio", logo: "🏪", ventas: "$0", clientes: 0 
+                            };
+                            localStorage.setItem('negocioActivo', JSON.stringify(infoNegocio));
+                        }
+
                         mostrarMensaje('Entrando...', 'success');
-                        redirigir(datosUsuario.rol);
-                    } else {
-                        mostrarMensaje('Error: No se encontró el rol del usuario.', 'error');
+                        redirigir(datos.rol);
                     }
                 }
             } catch (error) {
-                // Manejo de errores comunes para que se vea bien en pantalla
-                let mensajeError = error.message;
-                if (error.code === 'auth/email-already-in-use') mensajeError = 'Este correo ya está registrado.';
-                if (error.code === 'auth/weak-password') mensajeError = 'La contraseña debe tener al menos 6 caracteres.';
-                if (error.code === 'auth/invalid-credential') mensajeError = 'Correo o contraseña incorrectos.';
-                
-                mostrarMensaje(mensajeError, 'error');
+                mostrarMensaje(error.message, 'error');
             }
         });
 
-        // Redirigir a la pantalla correspondiente
         function redirigir(rol) {
-            // Guardamos temporalmente el rol en el navegador para validarlo en las otras páginas
             localStorage.setItem('sesionActiva', rol);
-            
             setTimeout(() => {
                 if (rol === 'admin') {
-                    // Abre las estadísticas del vendedor en una pestaña nueva
                     window.open('estadisticas_vendedor.html', '_blank');
                 } else {
-                    // Abre el catálogo para el turista en la misma pestaña
                     window.location.href = 'app.html';
                 }
-            }, 1500); // 1.5 segundos de pausa para que lea el mensaje de éxito
+            }, 1500); 
         }
 
         function mostrarMensaje(texto, tipo) {
