@@ -34,7 +34,7 @@
         }
         h2 { color: var(--rojo-vino); margin-bottom: 5px; }
         p { color: var(--verde-salvia); font-size: 14px; margin-top: 0; }
-        input, select { 
+        input { 
             width: 100%; 
             padding: 12px; 
             margin: 10px 0; 
@@ -80,19 +80,15 @@
 
     <div class="auth-box">
         <h2 id="authTitle">Iniciar Sesión</h2>
-        <p id="authDesc">Panel de Acceso Local</p>
+        <p id="authDesc">Panel de Acceso</p>
 
         <form id="authForm">
             <input type="email" id="email" placeholder="Correo electrónico" required>
             <input type="password" id="password" placeholder="Contraseña" required>
             
             <div id="registroExtra" style="display:none;">
-                <input type="text" id="nombre" placeholder="Nombre completo o Negocio">
-                <select id="rol">
-                    <option value="turista">Soy Turista / Cliente</option>
-                    <option value="admin">Soy Socio / Vendedor</option>
-                </select>
-            </div>
+                <input type="text" id="nombre" placeholder="Nombre completo">
+                </div>
 
             <button type="submit" class="btn-primario" id="btnAccion">Entrar</button>
         </form>
@@ -102,8 +98,8 @@
         <div id="msgStatus"></div>
 
         <div class="contact-info">
-            ¿Necesitas ayuda con tu cuenta?<br>
-            <b>Soporte Técnico:</b> <a href="mailto:soporte@tesorosmorelia.com">soporte@tesorosmorelia.com</a><br>
+            ¿Eres un negocio local y quieres unirte?<br>
+            <b>Contáctanos:</b> <a href="mailto:soporte@tesorosmorelia.com">soporte@tesorosmorelia.com</a><br>
             <b>WhatsApp:</b> +52 443 123 4567
         </div>
     </div>
@@ -113,7 +109,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Tu configuración de Firebase proporcionada
         const firebaseConfig = {
             apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
             authDomain: "hackathon-c1121.firebaseapp.com",
@@ -128,32 +123,31 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Mapa de archivos según usuario (Imagen proporcionada)
-        const VENDEDOR_MAP = {
-            "gazpachos@morelia.com": "vendedor_NEG_01.html",
-            "rosas@morelia.com": "vendedor_NEG_02.html",
-            "artesanias@morelia.com": "vendedor_NEG_03.html",
-            "tacos@morelia.com": "vendedor_NEG_04.html",
-            "mendoza@morelia.com": "vendedor_NEG_05.html",
-            "morelos@morelia.com": "vendedor_NEG_06.html"
-        };
+            const VENDEDOR_MAP = {
+                "gaspachosboulevard@mgmail.com": "vendedor_NEG_01.html",
+                "cafedelasrosas@gmail.com": "vendedor_NEG_02.html",
+                "artesaniasdonvasco@gmail.com": "vendedor_NEG_03.html",
+                "tacosElguero@gmail.com": "vendedor_NEG_04.html",
+                "correo_del_negocio_5@morelia.com": "vendedor_NEG_05.html",
+                "correo_del_negocio_6@morelia.com": "vendedor_NEG_06.html"
+            };
 
-        const authForm = document.getElementById('authForm');
-        const toggleAuth = document.getElementById('toggleAuth');
-        const registroExtra = document.getElementById('registroExtra');
-        const authTitle = document.getElementById('authTitle');
-        const btnAccion = document.getElementById('btnAccion');
-        const msgStatus = document.getElementById('msgStatus');
+            const authForm = document.getElementById('authForm');
+            const toggleAuth = document.getElementById('toggleAuth');
+            const registroExtra = document.getElementById('registroExtra');
+            const authTitle = document.getElementById('authTitle');
+            const btnAccion = document.getElementById('btnAccion');
+            const msgStatus = document.getElementById('msgStatus');
 
-        let modoRegistro = false;
+            let modoRegistro = false;
 
-        toggleAuth.addEventListener('click', () => {
-            modoRegistro = !modoRegistro;
-            authTitle.innerText = modoRegistro ? 'Crear Cuenta' : 'Iniciar Sesión';
-            btnAccion.innerText = modoRegistro ? 'Registrarse' : 'Entrar';
-            registroExtra.style.display = modoRegistro ? 'block' : 'none';
-            toggleAuth.innerText = modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
-        });
+            toggleAuth.addEventListener('click', () => {
+                modoRegistro = !modoRegistro;
+                authTitle.innerText = modoRegistro ? 'Crear Cuenta de Turista' : 'Iniciar Sesión';
+                btnAccion.innerText = modoRegistro ? 'Registrarse' : 'Entrar';
+                registroExtra.style.display = modoRegistro ? 'block' : 'none';
+                toggleAuth.innerText = modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
+            });
 
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -166,7 +160,9 @@
             try {
                 if (modoRegistro) {
                     const nombre = document.getElementById('nombre').value;
-                    const rol = document.getElementById('rol').value;
+                    
+                    // Se fuerza el rol a turista para todo el que se registre desde aquí
+                    const rol = 'turista'; 
                     
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "usuarios", cred.user.uid), {
@@ -200,16 +196,24 @@
         });
 
         function redirigir(rol, email) {
-            setTimeout(() => {
-                if (rol === 'admin') {
-                    // Redirige al archivo específico del mapa o al genérico si no está
-                    const destino = VENDEDOR_MAP[email] || 'vendedor_NEG_01.html';
-                    window.location.href = destino;
-                } else {
-                    window.location.href = 'app.html';
-                }
-            }, 1000);
+    setTimeout(() => {
+        if (rol === 'admin') {
+            // Busca el correo en el VENDEDOR_MAP
+            const destino = VENDEDOR_MAP[email];
+            
+            if (destino) {
+                // Si lo encuentra, lo manda a su html correspondiente
+                window.location.href = destino;
+            } else {
+                // Si el correo NO está en la lista de arriba, muestra un error claro
+                mostrarMsg(`Error: El correo ${email} no está configurado en el mapa.`, 'error');
+            }
+        } else {
+            // Los turistas van directo a la app
+            window.location.href = 'app.html';
         }
+    }, 1000);
+}
 
         function mostrarMsg(texto, tipo) {
             msgStatus.innerText = texto;
