@@ -90,7 +90,7 @@ Responde en español, profesional pero cercano. ${contexto}`;
 
         const style = document.createElement("style");
         style.textContent = `
-            #chat-btn{position:fixed;bottom:24px;right:24px;z-index:9990;width:56px;height:56px;border-radius:50%;background:#7D1520;color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(125,21,32,0.4);transition:transform 0.2s;}
+            #chat-btn{position:fixed;bottom:24px;right:24px;z-index:9999;width:56px;height:56px;border-radius:50%;background:#7D1520;color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(125,21,32,0.4);transition:transform 0.2s;}
             #chat-btn:hover{transform:scale(1.08);}
             #chat-panel{display:none;position:fixed;bottom:90px;right:24px;width:320px;max-height:460px;background:#FDFAF5;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.18);flex-direction:column;z-index:9989;border:2px solid #E8E0D0;overflow:hidden;font-family:'DM Sans',sans-serif;}
             #chat-panel.open{display:flex;}

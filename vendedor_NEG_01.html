@@ -60,7 +60,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx1);height:100vh;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx1);height:100vh;overflow:hidden;position: relative;}
 
 /* ── APP SHELL ── */
 .app-shell{display:flex;height:100vh;overflow:hidden;}
@@ -818,6 +818,86 @@ textarea{resize:vertical;min-height:80px;}
 </nav>
 
 </div><!-- /main -->
+</div><!-- /main -->
+
+<!-- ══ CHATBOT IA ══ -->
+<button id="ai-btn" onclick="toggleAI()" style="position:fixed;bottom:24px;right:24px;z-index:99999;width:56px;height:56px;border-radius:50%;background:#7D1520;color:white;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(125,21,32,0.4);">💬</button>
+
+<div id="ai-panel" style="display:none;position:fixed;bottom:90px;right:24px;width:320px;max-height:460px;background:#FDFAF5;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.2);flex-direction:column;z-index:99999;border:2px solid #E8E0D0;overflow:hidden;">
+  <div style="background:#7D1520;color:white;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;">
+    <span>🤖 Asistente IA</span>
+    <button onclick="toggleAI()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">×</button>
+  </div>
+  <div id="ai-msgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;max-height:320px;"></div>
+  <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid #E8E0D0;background:white;">
+    <input id="ai-input" type="text" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')sendAI()" style="flex:1;border:1px solid #E8E0D0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;">
+    <button onclick="sendAI()" style="background:#7D1520;color:white;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px;">➤</button>
+  </div>
+</div>
+
+<script>
+var AI_KEY = "TU_API_KEY_GEMINI_AQUI"; // ← pon tu key aquí directamente
+var AI_OPEN = false;
+var AI_HIST = [];
+
+function toggleAI() {
+  AI_OPEN = !AI_OPEN;
+  var panel = document.getElementById('ai-panel');
+  panel.style.display = AI_OPEN ? 'flex' : 'none';
+  if (AI_OPEN) {
+    if (AI_HIST.length === 0) addAIMsg("¡Hola! Soy tu asistente de negocios 🏪 ¿En qué te ayudo hoy?", false);
+    document.getElementById('ai-input').focus();
+  }
+}
+
+function addAIMsg(texto, esUser) {
+  var msgs = document.getElementById('ai-msgs');
+  var div = document.createElement('div');
+  div.style.cssText = esUser
+    ? 'background:#7D1520;color:white;padding:10px 13px;border-radius:12px;border-bottom-right-radius:3px;font-size:13px;line-height:1.5;align-self:flex-end;max-width:82%;'
+    : 'background:white;color:#1a1a1a;padding:10px 13px;border-radius:12px;border-bottom-left-radius:3px;font-size:13px;line-height:1.5;align-self:flex-start;max-width:82%;border:1px solid #E8E0D0;';
+  div.innerHTML = texto.replace(/\n/g,'<br>');
+  msgs.appendChild(div);
+  msgs.scrollTop = 9999;
+  return div;
+}
+
+async function sendAI() {
+  var input = document.getElementById('ai-input');
+  var texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  addAIMsg(texto, true);
+  var loading = addAIMsg('💭 ...', false);
+
+  AI_HIST.push({role:'user', parts:[{text: texto}]});
+
+  var system = 'Eres un asistente de negocios para ' + NEGOCIO_NOMBRE + ' en Tesoros de Morelia. ' +
+    'Ayuda al dueño con análisis de ventas, estrategias y promociones. Responde en español, profesional pero cercano.';
+
+  try {
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + AI_KEY, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_instruction: {parts:[{text: system}]},
+        contents: AI_HIST.slice(-10),
+        generationConfig: {temperature:0.7, maxOutputTokens:500}
+      })
+    });
+    var data = await res.json();
+    var respuesta = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta.';
+    loading.remove();
+    addAIMsg(respuesta, false);
+    AI_HIST.push({role:'model', parts:[{text: respuesta}]});
+  } catch(e) {
+    loading.remove();
+    addAIMsg('⚠️ Error: ' + e.message, false);
+  }
+}
+</script>
+
+
 </div><!-- /app-shell -->
 
 <!-- ══ MODAL: NUEVO PRODUCTO ══ -->
@@ -2489,9 +2569,6 @@ initFirestoreListeners();
 renderMercancias();
 </script>
 
-<!-- Chatbot IA para vendedor -->
-<script src="keys.js"></script>
-<div id="chat-widget">HOLA_PRUEBA</div>
-<script src="chatbot.js"></script>
+
 </body>
 </html>
