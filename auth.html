@@ -5,197 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Red Local Morelia</title>
     <style>
-        :root {
-            --rojo-vino: #7F2020;
-            --verde-salvia: #869B7E;
-            --oliva-claro: #C9CAAC;
-            --hueso: #F6F3EB;
-            --texto-oscuro: #2c3e50;
-        }
-
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--hueso); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .auth-box { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 8px 25px rgba(127, 32, 32, 0.15); width: 100%; max-width: 350px; text-align: center; }
+        :root { --rojo-vino: #7F2020; --verde-salvia: #869B7E; --oliva-claro: #C9CAAC; --hueso: #F6F3EB; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--hueso); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .auth-box { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 8px 25px rgba(127,32,32,0.15); width: 100%; max-width: 360px; text-align: center; }
         h2 { color: var(--rojo-vino); margin-bottom: 5px; }
-        p { color: var(--verde-salvia); font-size: 14px; margin-top: 0; }
-        
-        input, select { width: calc(100% - 24px); padding: 12px; margin: 10px 0; border: 2px solid var(--oliva-claro); border-radius: 6px; font-size: 14px; background-color: #fafafa; outline: none; transition: border-color 0.3s; }
+        p  { color: var(--verde-salvia); font-size: 14px; margin-top: 0; }
+        input, select { width: calc(100% - 24px); padding: 12px; margin: 8px 0; border: 2px solid var(--oliva-claro); border-radius: 6px; font-size: 14px; background: #fafafa; outline: none; transition: border-color 0.3s; }
         input:focus, select:focus { border-color: var(--verde-salvia); }
-        
-        .btn { background-color: var(--rojo-vino); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 15px; font-weight: bold; transition: background-color 0.3s; }
+        .btn { background-color: var(--rojo-vino); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 12px; font-weight: bold; transition: background-color 0.3s; }
         .btn:hover { background-color: #5c1616; }
-        
-        .btn-outline { background-color: transparent; color: var(--rojo-vino); border: 2px solid var(--rojo-vino); margin-top: 15px; }
+        .btn-outline { background: transparent; color: var(--rojo-vino); border: 2px solid var(--rojo-vino); margin-top: 12px; }
         .btn-outline:hover { background-color: var(--rojo-vino); color: white; }
-        
-        .error, .success { display: none; font-size: 14px; margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 6px; }
-        .error { color: #c0392b; background-color: #fadbd8; }
-        .success { color: #27ae60; background-color: #d5f5e3; }
-        .hidden { display: none; }
+        .msg { display: none; font-size: 14px; margin-top: 12px; font-weight: bold; padding: 10px; border-radius: 6px; }
+        .error   { color: #c0392b; background: #fadbd8; }
+        .success { color: #27ae60; background: #d5f5e3; }
+        .hidden  { display: none; }
+        hr { margin: 18px 0; border: 0; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
-
-    <div class="auth-box">
-        <h2 id="titulo-form">Iniciar Sesión</h2>
-        <p id="subtitulo-form">Ingresa con tu correo y contraseña.</p>
-        
-        <div id="campos-registro" class="hidden">
-            <input type="text" id="nombre" placeholder="Nombre(s)">
-            <input type="text" id="apellido" placeholder="Apellidos">
-        </div>
-
-        <input type="email" id="correo" placeholder="Correo electrónico">
-        <input type="password" id="password" placeholder="Contraseña">
-        
-        <select id="rol-registro" class="hidden">
-            <option value="turista">Soy Turista / Comprador</option>
-            <option value="admin">Soy Dueño de Negocio</option>
-        </select>
-
-        <button id="btn-accion" class="btn">Entrar</button>
-        
-        <p id="msg-status"></p>
-
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        
-        <button id="btn-toggle" class="btn btn-outline">¿No tienes cuenta? Regístrate</button>
+<div class="auth-box">
+    <h2 id="titulo">Iniciar Sesión</h2>
+    <p  id="subtitulo">Ingresa con tu correo y contraseña.</p>
+    <div id="campos-registro" class="hidden">
+        <input type="text" id="nombre"   placeholder="Nombre(s)">
+        <input type="text" id="apellido" placeholder="Apellidos">
     </div>
+    <input type="email"    id="correo"   placeholder="Correo electrónico">
+    <input type="password" id="password" placeholder="Contraseña">
+    <select id="rol-registro" class="hidden">
+        <option value="turista">Soy Turista / Comprador</option>
+        <option value="admin">Soy Dueño de Negocio</option>
+    </select>
+    <button id="btn-accion" class="btn">Entrar</button>
+    <p id="msg-status" class="msg"></p>
+    <hr>
+    <button id="btn-toggle" class="btn btn-outline">¿No tienes cuenta? Regístrate</button>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp }                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword,
+             signInWithEmailAndPassword }                 from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc }          from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
-            authDomain: "hackathon-c1121.firebaseapp.com",
-            projectId: "hackathon-c1121",
-            storageBucket: "hackathon-c1121.firebasestorage.app",
-            messagingSenderId: "794762493985",
-            appId: "1:794762493985:web:6f3c9dfef332f1f34ea360",
-            measurementId: "G-DGSZRMG33B"
-        };
+    const firebaseConfig = {
+        apiKey:            "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
+        authDomain:        "hackathon-c1121.firebaseapp.com",
+        projectId:         "hackathon-c1121",
+        storageBucket:     "hackathon-c1121.firebasestorage.app",
+        messagingSenderId: "794762493985",
+        appId:             "1:794762493985:web:6f3c9dfef332f1f34ea360",
+        measurementId:     "G-DGSZRMG33B"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    const fbApp = initializeApp(firebaseConfig);
+    const auth  = getAuth(fbApp);
+    const db    = getFirestore(fbApp);
 
-        let modoActual = 'login';
-        
-        const titulo = document.getElementById('titulo-form');
-        const subtitulo = document.getElementById('subtitulo-form');
-        const camposRegistro = document.getElementById('campos-registro');
-        const selectorRol = document.getElementById('rol-registro');
-        const btnAccion = document.getElementById('btn-accion');
-        const btnToggle = document.getElementById('btn-toggle');
-        const msgStatus = document.getElementById('msg-status');
+    // Email → archivo HTML específico del negocio
+    const VENDEDOR_MAP = {
+        "admin@boulevard.com": "vendedor_NEG_01.html",
+        "admin@rosas.com":     "vendedor_NEG_02.html",
+        "admin@donvasco.com":  "vendedor_NEG_03.html",
+        "admin@guero.com":     "vendedor_NEG_04.html",
+        "admin@virrey.com":    "vendedor_NEG_05.html",
+        "admin@museo.com":     "vendedor_NEG_06.html"
+    };
 
-        // Datos maestros de los 6 locales para simulación visual
-        const baseDeDatosNegocios = {
-            "admin@boulevard.com": { id: "NEG_01", nombre: "Gazpachos El Boulevard", logo: "🍹", ventas: "$4,200", clientes: 52 },
-            "admin@rosas.com": { id: "NEG_02", nombre: "Café de las Rosas", logo: "☕", ventas: "$1,850", clientes: 34 },
-            "admin@donvasco.com": { id: "NEG_03", nombre: "Artesanías Don Vasco", logo: "🏺", ventas: "$5,300", clientes: 18 },
-            "admin@guero.com": { id: "NEG_04", nombre: "Tacos El Güero", logo: "🌮", ventas: "$3,840", clientes: 47 },
-            "admin@virrey.com": { id: "NEG_05", nombre: "Hotel Virrey de Mendoza", logo: "🏨", ventas: "$12,400", clientes: 12 },
-            "admin@museo.com": { id: "NEG_06", nombre: "Museo Casa de Morelos", logo: "🏛️", ventas: "$2,100", clientes: 85 }
-        };
+    // Email → datos del negocio (para guardar en Firestore al registrar)
+    const NEGOCIO_DATA = {
+        "admin@boulevard.com": { negocioId:"NEG_01", negocioNombre:"Gazpachos El Boulevard" },
+        "admin@rosas.com":     { negocioId:"NEG_02", negocioNombre:"Café de las Rosas" },
+        "admin@donvasco.com":  { negocioId:"NEG_03", negocioNombre:"Artesanías Don Vasco" },
+        "admin@guero.com":     { negocioId:"NEG_04", negocioNombre:"Tacos El Güero" },
+        "admin@virrey.com":    { negocioId:"NEG_05", negocioNombre:"Hotel Virrey de Mendoza" },
+        "admin@museo.com":     { negocioId:"NEG_06", negocioNombre:"Museo Casa de Morelos" }
+    };
 
-        btnToggle.addEventListener('click', () => {
-            msgStatus.style.display = 'none';
-            if (modoActual === 'login') {
-                modoActual = 'registro';
-                titulo.innerText = 'Crear Cuenta';
-                subtitulo.innerText = 'Únete para obtener o crear promociones.';
-                camposRegistro.classList.remove('hidden');
-                selectorRol.classList.remove('hidden');
-                btnAccion.innerText = 'Registrarme';
-                btnToggle.innerText = '¿Ya tienes cuenta? Inicia sesión';
+    let modo = 'login';
+    const titulo    = document.getElementById('titulo');
+    const subtitulo = document.getElementById('subtitulo');
+    const camposReg = document.getElementById('campos-registro');
+    const selectorRol = document.getElementById('rol-registro');
+    const btnAccion = document.getElementById('btn-accion');
+    const btnToggle = document.getElementById('btn-toggle');
+    const msgStatus = document.getElementById('msg-status');
+
+    btnToggle.addEventListener('click', () => {
+        msgStatus.style.display = 'none';
+        if (modo === 'login') {
+            modo = 'registro';
+            titulo.innerText = 'Crear Cuenta'; subtitulo.innerText = 'Únete para obtener o crear promociones.';
+            camposReg.classList.remove('hidden'); selectorRol.classList.remove('hidden');
+            btnAccion.innerText = 'Registrarme'; btnToggle.innerText = '¿Ya tienes cuenta? Inicia sesión';
+        } else {
+            modo = 'login';
+            titulo.innerText = 'Iniciar Sesión'; subtitulo.innerText = 'Ingresa con tu correo y contraseña.';
+            camposReg.classList.add('hidden'); selectorRol.classList.add('hidden');
+            btnAccion.innerText = 'Entrar'; btnToggle.innerText = '¿No tienes cuenta? Regístrate';
+        }
+    });
+
+    btnAccion.addEventListener('click', async () => {
+        const email    = document.getElementById('correo').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!email || !password) { mostrarMsg('Llena todos los campos', 'error'); return; }
+
+        try {
+            if (modo === 'registro') {
+                const nombre   = document.getElementById('nombre').value.trim();
+                const apellido = document.getElementById('apellido').value.trim();
+                const rol      = selectorRol.value;
+                if (!nombre || !apellido) { mostrarMsg('Nombre y apellido requeridos', 'error'); return; }
+
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                const uid  = cred.user.uid;
+                const docData = { nombre, apellido, correo: email, rol };
+                if (rol === 'admin' && NEGOCIO_DATA[email]) {
+                    docData.negocioId     = NEGOCIO_DATA[email].negocioId;
+                    docData.negocioNombre = NEGOCIO_DATA[email].negocioNombre;
+                }
+                await setDoc(doc(db, "usuarios", uid), docData);
+                mostrarMsg('¡Registro exitoso!', 'success');
+                redirigir(rol, email);
+
             } else {
-                modoActual = 'login';
-                titulo.innerText = 'Iniciar Sesión';
-                subtitulo.innerText = 'Ingresa con tu correo y contraseña.';
-                camposRegistro.classList.add('hidden');
-                selectorRol.classList.add('hidden');
-                btnAccion.innerText = 'Entrar';
-                btnToggle.innerText = '¿No tienes cuenta? Regístrate';
+                const cred = await signInWithEmailAndPassword(auth, email, password);
+                const uid  = cred.user.uid;
+                const snap = await getDoc(doc(db, "usuarios", uid));
+                if (!snap.exists()) { mostrarMsg('Perfil no encontrado.', 'error'); return; }
+                const datos = snap.data();
+                mostrarMsg('Entrando...', 'success');
+                redirigir(datos.rol, email);
             }
-        });
-
-        btnAccion.addEventListener('click', async () => {
-            const email = document.getElementById('correo').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!email || !password) {
-                mostrarMensaje('Llena todos los campos', 'error');
-                return;
-            }
-
-            try {
-                if (modoActual === 'registro') {
-                    const nombre = document.getElementById('nombre').value.trim();
-                    const apellido = document.getElementById('apellido').value.trim();
-                    const rol = selectorRol.value;
-
-                    if (!nombre || !apellido) {
-                        mostrarMensaje('Nombre y apellido requeridos', 'error');
-                        return;
-                    }
-
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-
-                    // Guardar perfil completo en Firestore
-                    await setDoc(doc(db, "usuarios", user.uid), {
-                        nombre: nombre,
-                        apellido: apellido,
-                        correo: email,
-                        rol: rol
-                    });
-
-                    mostrarMensaje('¡Registro exitoso!', 'success');
-                    redirigir(rol);
-
-                } else {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-
-                    const docSnap = await getDoc(doc(db, "usuarios", user.uid));
-                    if (docSnap.exists()) {
-                        const datos = docSnap.data();
-                        
-                        // Si es admin, guardamos el contexto del negocio
-                        if (datos.rol === 'admin') {
-                            const infoNegocio = baseDeDatosNegocios[email] || { 
-                                id: user.uid, nombre: "Nuevo Negocio", logo: "🏪", ventas: "$0", clientes: 0 
-                            };
-                            localStorage.setItem('negocioActivo', JSON.stringify(infoNegocio));
-                        }
-
-                        mostrarMensaje('Entrando...', 'success');
-                        redirigir(datos.rol);
-                    }
-                }
-            } catch (error) {
-                mostrarMensaje(error.message, 'error');
-            }
-        });
-
-        function redirigir(rol) {
-            localStorage.setItem('sesionActiva', rol);
-            setTimeout(() => {
-                if (rol === 'admin') {
-                    window.open('estadisticas_vendedor.html', '_blank');
-                } else {
-                    window.location.href = 'app.html';
-                }
-            }, 1500); 
+        } catch(err) {
+            mostrarMsg(err.message, 'error');
         }
+    });
 
-        function mostrarMensaje(texto, tipo) {
-            msgStatus.innerText = texto;
-            msgStatus.className = tipo;
-            msgStatus.style.display = 'block';
-        }
-    </script>
+    function redirigir(rol, email) {
+        setTimeout(() => {
+            if (rol === 'admin') {
+                const archivo = VENDEDOR_MAP[email] || 'vendedor_NEG_01.html';
+                window.location.href = archivo;
+            } else {
+                window.location.href = 'app.html';
+            }
+        }, 1200);
+    }
+
+    function mostrarMsg(texto, tipo) {
+        msgStatus.innerText = texto;
+        msgStatus.className = 'msg ' + tipo;
+        msgStatus.style.display = 'block';
+    }
+</script>
 </body>
 </html>
