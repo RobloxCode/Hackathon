@@ -1247,7 +1247,9 @@ const firebaseConfig = {
   appId: "1:794762493985:web:6f3c9dfef332f1f34ea360",
   measurementId: "G-DGSZRMG33B"
 };
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.firestore();
 try { firebase.analytics(); } catch(e) {}
 
@@ -1280,6 +1282,7 @@ function initFirestoreListeners() {
     renderMercancias();
     const modalOpen = document.getElementById('modal-venta')?.classList.contains('open');
     popularVentaProductos(modalOpen);
+    actualizarAnalisis(); 
   }, err => console.error('productos:', err));
 
   db.collection('proveedores').where('negocioId','==',NEGOCIO_ID).onSnapshot(snap => {
@@ -1315,11 +1318,11 @@ function actualizarDashboard() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const ayer = new Date(hoy); ayer.setDate(ayer.getDate()-1);
 
-  const ventasHoy  = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= hoy);
+  const ventasHoy  = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= hoy && v.status !== 'cancelada');
   const ventasAyer = ventas.filter(v => {
     if (!v.fecha?.toDate) return false;
     const d = v.fecha.toDate();
-    return d >= ayer && d < hoy;
+    return d >= ayer && d < hoy && v.status !== 'cancelada';
   });
 
   const totalHoy  = ventasHoy.reduce((a,v) => a+(v.total||0), 0);
@@ -1338,6 +1341,7 @@ function actualizarDashboard() {
     const fb = b.ultimaVisita?.toDate ? b.ultimaVisita.toDate() : 0;
     return fb - fa;
   }).slice(0,5);
+  
   const lista = document.getElementById('dashboard-clientes-recientes');
   if (lista) {
     lista.innerHTML = recent.length === 0
@@ -1345,7 +1349,7 @@ function actualizarDashboard() {
       : recent.map(c => clienteHTML(c, colores)).join('');
   }
 
-  // Ventas recientes en dashboard
+  // Ventas recientes
   const dvr = document.getElementById('dash-ventas-recientes');
   if (dvr) {
     const recientes = ventas.slice(0,4);
@@ -1360,7 +1364,7 @@ function actualizarDashboard() {
 ════════════════════════════ */
 function actualizarPanelVentas() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const ventasHoy = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= hoy);
+  const ventasHoy = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= hoy && v.status !== 'cancelada');
   const totalHoy  = ventasHoy.reduce((a,v) => a+(v.total||0), 0);
   const prom = ventasHoy.length > 0 ? Math.round(totalHoy/ventasHoy.length) : 0;
 
@@ -1368,7 +1372,8 @@ function actualizarPanelVentas() {
   setText('vc-sum-ventas', ventasHoy.length);
   setText('vc-sum-prom', '$'+prom.toLocaleString('es-MX'));
 
-  renderListaVentas(ventasHoy);
+  // Le pasamos todo el historial para la tabla de abajo
+  renderListaVentas(ventas);
 }
 
 function renderListaVentas(lista) {
@@ -1389,13 +1394,17 @@ function ventaRowHTML(v) {
   const st = v.status || 'completada';
   const statusLabels = {completada:'Completada', pendiente:'Pendiente', devolucion:'Devolución', cancelada:'Cancelada'};
   const statusClass  = {completada:'vs-comp', pendiente:'vs-pend', devolucion:'vs-devl', cancelada:'vs-devl'};
-  const hora = v.fecha?.toDate ? v.fecha.toDate().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '—';
+  
+  // Ahora muestra Fecha + Hora
+  const hora = v.fecha?.toDate ? v.fecha.toDate().toLocaleDateString('es-MX') + ' ' + v.fecha.toDate().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '—';
   const estaActiva = st === 'completada' || st === 'pendiente';
+  
   const acciones = estaActiva ? `
     <div class="venta-actions">
       ${st==='completada'?`<button class="btn-venta-action btn-devolver-venta" onclick="accionVenta('${v.id}','devolucion')">↩ Devolución</button>`:''}
       <button class="btn-venta-action btn-cancel-venta" onclick="accionVenta('${v.id}','cancelada')">✕ Cancelar</button>
     </div>` : '';
+    
   return `<div class="venta-row">
     <div class="venta-ico">${v.ico||'🧾'}</div>
     <div class="venta-info">
@@ -1423,9 +1432,7 @@ function setVentaFiltro(btn, filtro) {
   document.querySelectorAll('.vc-filter-row .vc-filter-chip').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   ventaFiltroActivo = filtro;
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const ventasHoy = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= hoy);
-  renderListaVentas(ventasHoy);
+  renderListaVentas(ventas);
 }
 
 /* ════════════════════════════
@@ -1442,18 +1449,18 @@ function actualizarAnalisis() {
 
   if (periodoActivo === 'semana') {
     inicio = new Date(hoy);
-    inicio.setDate(hoy.getDate() - hoy.getDay() + (hoy.getDay()===0?-6:1));
-    inicioAnt = new Date(inicio); inicioAnt.setDate(inicioAnt.getDate()-7);
+    inicio.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
+    inicioAnt = new Date(inicio); inicioAnt.setDate(inicioAnt.getDate() - 7);
   } else if (periodoActivo === 'mes') {
     inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    inicioAnt = new Date(hoy.getFullYear(), hoy.getMonth()-1, 1);
+    inicioAnt = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
   } else {
     inicio = new Date(hoy.getFullYear(), 0, 1);
-    inicioAnt = new Date(hoy.getFullYear()-1, 0, 1);
+    inicioAnt = new Date(hoy.getFullYear() - 1, 0, 1);
   }
 
-  const periodo   = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= inicio);
-  const periodoAnt= ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= inicioAnt && v.fecha.toDate() < inicio);
+  const periodo   = ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= inicio && v.status !== 'cancelada');
+  const periodoAnt= ventas.filter(v => v.fecha?.toDate && v.fecha.toDate() >= inicioAnt && v.fecha.toDate() < inicio && v.status !== 'cancelada');
 
   const totPer    = periodo.reduce((a,v) => a+(v.total||0), 0);
   const totPerAnt = periodoAnt.reduce((a,v) => a+(v.total||0), 0);
@@ -1468,7 +1475,7 @@ function actualizarAnalisis() {
   periodo.forEach(v => {
     (v.items||[]).forEach(it => {
       const prod = productos.find(p => p.nombre === it.nombre);
-      if (prod) costoTotal += (prod.costo||0) * (it.qty||1);
+      costoTotal += (prod ? (prod.costo||0) : (it.costo||0)) * (it.qty||1);
     });
   });
 
@@ -1477,6 +1484,7 @@ function actualizarAnalisis() {
   setText('an-ticket-prom', '$'+prom.toLocaleString('es-MX'));
   setText('an-transacciones', periodo.length);
   setText('an-tasa-retorno', tasaRetorno+'%');
+  
   const tagEl = document.getElementById('an-tag-retorno');
   if (tagEl) tagEl.textContent = tasaRetorno >= 60 ? 'Excelente' : tasaRetorno >= 40 ? 'Bueno' : 'Por mejorar';
 
@@ -1491,9 +1499,11 @@ function actualizarAnalisis() {
       conteo[it.nombre] = (conteo[it.nombre]||0) + (it.precio||0)*(it.qty||1);
     });
   });
+  
   const top = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const maxVal = top[0]?.[1] || 1;
+  const maxVal = top.length > 0 ? top[0][1] : 1;
   const topList = document.getElementById('an-top-productos');
+  
   if (topList) {
     if (top.length === 0) {
       topList.innerHTML = `<div class="empty-state"><div class="es-icon">📊</div><div class="es-title">Sin datos de ventas</div><div class="es-sub">Registra ventas para ver el ranking.</div></div>`;
@@ -1543,7 +1553,6 @@ function renderClientes() {
     return;
   }
   lista.innerHTML = clientes.map(c => clienteHTML(c)).join('');
-  actualizarAnalisis();
 }
 
 
@@ -1969,7 +1978,7 @@ function abrirCompraRapida(nombreProd, prov) {
 }
 
 /* ════════════════════════════
-   REGISTRAR VENTA (Firestore)
+   REGISTRAR VENTA MANUAL
 ════════════════════════════ */
 function popularVentaProductos(preservarQtys) {
   const lista = document.getElementById('venta-productos-lista');
@@ -2013,13 +2022,15 @@ function actualizarTotalVenta() {
 }
 
 async function registrarVenta() {
-  const items = productos.map((p,i) => ({nombre:p.nombre, precio:p.precio||0, ico:p.ico||'📦', qty:ventasQtys[i]||0})).filter(it=>it.qty>0);
+  const items = productos.map((p,i) => ({nombre:p.nombre, precio:p.precio||0, costo:p.costo||0, ico:p.ico||'📦', qty:ventasQtys[i]||0})).filter(it=>it.qty>0);
   if (items.length === 0) { showToast('⚠️ Agrega al menos un producto'); return; }
+  
   const total = items.reduce((a,it) => a+it.precio*it.qty, 0);
   const clienteNombre = document.getElementById('venta-cliente').value.trim()||'Cliente sin cuenta';
   const pago = document.getElementById('venta-pago').value;
   const desc = items.map(it=>`${it.nombre} x${it.qty}`).join(', ');
   const ico  = items[0].ico;
+  
   try {
     await db.collection('ventas').add({
       cliente: clienteNombre,
@@ -2052,7 +2063,7 @@ function enviarPromo() {
 }
 
 /* ════════════════════════════
-   CANJEAR CÓDIGO
+   CANJEAR CÓDIGO (Manual)
 ════════════════════════════ */
 var canjearUID    = null;
 var canjearNombre = null;
@@ -2085,13 +2096,12 @@ async function validarCodigo() {
   document.getElementById('canjear-sub').textContent = 'Buscando cliente...';
   try {
     var snap = await db.collection('codigos_venta').doc(codigo).get();
-    if (!snap.exists) { mostrarCanjearError('Código "' + codigo + '" no encontrado. Pide al cliente que genere uno nuevo desde la app.'); return; }
+    if (!snap.exists) { mostrarCanjearError('Código "' + codigo + '" no encontrado. Pide al cliente que genere uno nuevo.'); return; }
     var datos = snap.data();
     if (datos.usado) { mostrarCanjearError('Este código ya fue utilizado. El cliente debe generar uno nuevo.'); return; }
     if (datos.ts && datos.ts.toDate && Date.now() - datos.ts.toDate().getTime() > 30*60*1000) {
       mostrarCanjearError('Este código expiró (más de 30 min). El cliente debe generar uno nuevo.'); return;
     }
-    // Verificar que el código sea del negocio correcto
     if (datos.negocioId && datos.negocioId !== NEGOCIO_ID) {
       var negCorrecto = datos.negocio || datos.negocioId;
       mostrarCanjearError('Este código es exclusivo para ' + negCorrecto + '. Visita ese local para canjearlo.'); return;
@@ -2101,6 +2111,7 @@ async function validarCodigo() {
     var u = uSnap.data();
     canjearUID = datos.uid; canjearCodigo = codigo;
     canjearNombre = ((u.nombre||'') + ' ' + (u.apellido||'')).trim() || datos.nombre || 'Cliente';
+    
     document.getElementById('canjear-paso-input').style.display = 'none';
     document.getElementById('canjear-paso-venta').style.display = '';
     document.getElementById('canjear-sub').textContent = 'Cliente verificado — elige los productos';
@@ -2138,18 +2149,46 @@ function actualizarTotalCanjear() {
 
 async function confirmarCanjeVenta() {
   if (!canjearUID) { showToast('No hay cliente verificado'); return; }
-  var items=[]; for(var i=0;i<productos.length;i++) { var q=canjearQtys[i]||0; if(q>0) items.push({nombre:productos[i].nombre,precio:productos[i].precio||0,ico:productos[i].ico||'📦',qty:q,costo:productos[i].costo||0}); }
+  var items=[]; 
+  for(var i=0;i<productos.length;i++) { 
+    var q=canjearQtys[i]||0; 
+    if(q>0) items.push({nombre:productos[i].nombre,precio:productos[i].precio||0,ico:productos[i].ico||'📦',qty:q,costo:productos[i].costo||0}); 
+  }
   if (items.length===0) { showToast('Agrega al menos un producto'); return; }
+  
   var tv=0,gan=0,desc=[];
-  for(var j=0;j<items.length;j++) { tv+=items[j].precio*items[j].qty; gan+=(items[j].precio-items[j].costo)*items[j].qty; desc.push(items[j].nombre+' x'+items[j].qty); }
+  for(var j=0;j<items.length;j++) { 
+    tv+=items[j].precio*items[j].qty; 
+    gan+=(items[j].precio-items[j].costo)*items[j].qty; 
+    desc.push(items[j].nombre+' x'+items[j].qty); 
+  }
   var pago=document.getElementById('canjear-pago').value;
+  
   try {
-    await db.collection('ventas').add({clienteID:canjearUID,cliente:canjearNombre,descripcion:desc.join(', '),total:tv,ganancia:gan,items:items,pago:pago,ico:items[0].ico,negocioId:NEGOCIO_ID,status:'completada',fecha:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('ventas').add({
+        clienteID:canjearUID,
+        cliente:canjearNombre,
+        descripcion:desc.join(', '),
+        total:tv,
+        ganancia:gan,
+        items:items,
+        pago:pago,
+        ico:items[0].ico,
+        negocioId:NEGOCIO_ID,
+        status:'completada',
+        fecha:firebase.firestore.FieldValue.serverTimestamp()
+    });
     await db.collection('codigos_venta').doc(canjearCodigo).update({usado:true});
+    
     var cRef=db.collection('clientes').doc(canjearUID+'_'+NEGOCIO_ID);
     var cSnap=await cRef.get();
-    if(cSnap.exists){var d=cSnap.data(),pts=(d.puntos||0)+Math.floor(tv);await cRef.update({visitas:(d.visitas||0)+1,puntos:pts,ultimaVisita:firebase.firestore.FieldValue.serverTimestamp(),nivel:calcNivel(pts)});}
-    else{await cRef.set({nombre:canjearNombre,negocioId:NEGOCIO_ID,visitas:1,puntos:Math.floor(tv),ultimaVisita:firebase.firestore.FieldValue.serverTimestamp(),nivel:'Bronce'});}
+    if(cSnap.exists){
+        var d=cSnap.data(),pts=(d.puntos||0)+Math.floor(tv);
+        await cRef.update({visitas:(d.visitas||0)+1,puntos:pts,ultimaVisita:firebase.firestore.FieldValue.serverTimestamp(),nivel:calcNivel(pts)});
+    } else{
+        await cRef.set({nombre:canjearNombre,negocioId:NEGOCIO_ID,visitas:1,puntos:Math.floor(tv),ultimaVisita:firebase.firestore.FieldValue.serverTimestamp(),nivel:'Bronce'});
+    }
+    
     document.getElementById('canjear-paso-venta').style.display='none';
     document.getElementById('canjear-paso-exito').style.display='';
     document.getElementById('canjear-exito-msg').textContent='$'+tv.toLocaleString('es-MX')+' registrados para '+canjearNombre+'. Ganancia: $'+gan.toLocaleString('es-MX',{minimumFractionDigits:2})+'.';
@@ -2159,13 +2198,8 @@ async function confirmarCanjeVenta() {
 
 function calcNivel(p){if(p>=5000)return'Oro';if(p>=1500)return'Plata';return'Bronce';}
 
-document.addEventListener('DOMContentLoaded',function(){
-  var inp=document.getElementById('canjear-input');
-  if(inp){inp.addEventListener('keydown',function(e){if(e.key==='Enter')validarCodigo();});inp.addEventListener('input',function(){this.value=this.value.toUpperCase();});}
-});
-
 /* ════════════════════════════
-   NAVEGACIÓN
+   NAVEGACIÓN Y TABS
 ════════════════════════════ */
 function goScreen(name, btn) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -2185,9 +2219,6 @@ function goScreen(name, btn) {
   if (name==='clients') renderClientes();
 }
 
-/* ════════════════════════════
-   TABS
-════════════════════════════ */
 function switchMercTab(btn, panelId) {
   btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
@@ -2197,9 +2228,8 @@ function switchMercTab(btn, panelId) {
   document.getElementById(panelId).classList.add('active');
 }
 
-
 /* ════════════════════════════
-   MODALS
+   MODALS Y UTILS
 ════════════════════════════ */
 function openModal(id) {
   const overlay = document.getElementById(id);
@@ -2224,9 +2254,6 @@ document.querySelectorAll('.modal-overlay').forEach(overlay=>{
   overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(overlay.id); });
 });
 
-/* ════════════════════════════
-   UTILS
-════════════════════════════ */
 function setText(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
@@ -2234,6 +2261,7 @@ function setText(id, val) {
 
 function showToast(msg) {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2800);
@@ -2246,10 +2274,8 @@ function changeQty(btn, delta) {
 }
 
 /* ════════════════════════════
-   VALIDACIÓN POR CÓDIGO — FLUJO COMPLETO
+   VALIDACIÓN QR
 ════════════════════════════ */
-
-
 function abrirEscaner() {
   reiniciarEscaner();
   document.getElementById('modal-qr-scanner').classList.add('open');
@@ -2258,17 +2284,11 @@ function abrirEscaner() {
 
 function cerrarEscaner() {
   document.getElementById('modal-qr-scanner').classList.remove('open');
-  qrClienteUID = null;
-  qrClienteNombre = null;
-  qrVentasQtys = {};
-  qrCodigoActivo = null;
+  qrClienteUID = null; qrClienteNombre = null; qrVentasQtys = {}; qrCodigoActivo = null;
 }
 
 function reiniciarEscaner() {
-  qrClienteUID = null;
-  qrClienteNombre = null;
-  qrVentasQtys = {};
-  qrCodigoActivo = null;
+  qrClienteUID = null; qrClienteNombre = null; qrVentasQtys = {}; qrCodigoActivo = null;
   mostrarPasoScanner();
   const inp = document.getElementById('qr-codigo-input');
   if (inp) { inp.value = ''; }
@@ -2301,53 +2321,30 @@ function mostrarPasoExito(msg) {
 
 async function validarCodigoCliente() {
   const codigo = (document.getElementById('qr-codigo-input')?.value || '').trim().toUpperCase();
-  if (!codigo || codigo.length < 4) {
-    showToast('⚠️ Ingresa el código completo');
-    return;
-  }
+  if (!codigo || codigo.length < 4) { showToast('⚠️ Ingresa el código completo'); return; }
 
   document.getElementById('qr-modal-sub').textContent = 'Verificando código…';
-
   try {
-    // Buscar el código en la colección codigos_venta
     const snap = await db.collection('codigos_venta').doc(codigo).get();
-
-    if (!snap.exists) {
-      mostrarPasoError('Código "' + codigo + '" no encontrado. Pide al cliente que genere uno nuevo.');
-      return;
-    }
-
+    if (!snap.exists) { mostrarPasoError('Código "' + codigo + '" no encontrado. Pide al cliente que genere uno nuevo.'); return; }
+    
     const datos = snap.data();
+    if (datos.usado) { mostrarPasoError('Este código ya fue utilizado. El cliente debe generar uno nuevo.'); return; }
 
-    // Verificar que no haya sido usado ya
-    if (datos.usado) {
-      mostrarPasoError('Este código ya fue utilizado. El cliente debe generar uno nuevo.');
-      return;
-    }
-
-    // Verificar TTL: el código expira en 30 minutos
     const TTL_MS = 30 * 60 * 1000;
-    if (datos.ts?.toDate) {
-      const edad = Date.now() - datos.ts.toDate().getTime();
-      if (edad > TTL_MS) {
+    if (datos.ts?.toDate && (Date.now() - datos.ts.toDate().getTime() > TTL_MS)) {
         mostrarPasoError('Este código ha expirado. Pide al cliente que genere uno nuevo desde la app.');
         return;
-      }
     }
 
-    // Verificar que el UID exista en usuarios
     const usuarioSnap = await db.collection('usuarios').doc(datos.uid).get();
-    if (!usuarioSnap.exists) {
-      mostrarPasoError('No se encontró el usuario en la base de datos.');
-      return;
-    }
+    if (!usuarioSnap.exists) { mostrarPasoError('No se encontró el usuario en la base de datos.'); return; }
 
     const usuarioDatos = usuarioSnap.data();
     qrClienteUID = datos.uid;
     qrCodigoActivo = codigo;
     qrClienteNombre = ((usuarioDatos.nombre || '') + ' ' + (usuarioDatos.apellido || '')).trim() || datos.nombre || 'Cliente';
 
-    // Mostrar paso de selección de productos
     document.getElementById('qr-paso-scanner').style.display = 'none';
     document.getElementById('qr-paso-venta').style.display = '';
     document.getElementById('qr-modal-sub').textContent = 'Cliente verificado — selecciona los productos';
@@ -2358,18 +2355,8 @@ async function validarCodigoCliente() {
 
     qrVentasQtys = {};
     popularQRProductos();
-
-  } catch (e) {
-    mostrarPasoError('Error al consultar Firebase: ' + e.message);
-  }
+  } catch (e) { mostrarPasoError('Error: ' + e.message); }
 }
-
-// Permitir validar con Enter
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('qr-codigo-input')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') validarCodigoCliente();
-  });
-});
 
 function popularQRProductos() {
   const lista = document.getElementById('qr-venta-productos-lista');
@@ -2425,28 +2412,22 @@ async function confirmarVentaQR() {
   const pago = document.getElementById('qr-venta-pago').value;
 
   try {
-    // 1. Registrar la venta
     await db.collection('ventas').add({
       clienteID: qrClienteUID,
       cliente: qrClienteNombre,
-      descripcion,
-      total: totalVenta,
-      ganancia,
-      items,
-      pago,
-      ico,
+      descripcion, total: totalVenta, ganancia, items, pago, ico,
       status: 'completada',
+      negocioId: NEGOCIO_ID,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 2. Marcar el código como usado (un solo uso)
     if (qrCodigoActivo) {
       await db.collection('codigos_venta').doc(qrCodigoActivo).update({ usado: true });
     }
 
-    // 3. Crear/actualizar registro del cliente en colección clientes
-    const clienteRef = db.collection('clientes').doc(qrClienteUID);
+    const clienteRef = db.collection('clientes').doc(qrClienteUID+'_'+NEGOCIO_ID);
     const clienteSnap = await clienteRef.get();
+    
     if (clienteSnap.exists) {
       const d = clienteSnap.data();
       const nuevosPuntos = (d.puntos || 0) + Math.floor(totalVenta);
@@ -2459,6 +2440,7 @@ async function confirmarVentaQR() {
     } else {
       await clienteRef.set({
         nombre: qrClienteNombre,
+        negocioId: NEGOCIO_ID,
         visitas: 1,
         puntos: Math.floor(totalVenta),
         ultimaVisita: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2466,9 +2448,7 @@ async function confirmarVentaQR() {
       });
     }
 
-    mostrarPasoExito(
-      `$${totalVenta.toLocaleString('es-MX')} registrados para ${qrClienteNombre}. Ganancia: $${ganancia.toLocaleString('es-MX', {minimumFractionDigits:2})}.`
-    );
+    mostrarPasoExito(`$${totalVenta.toLocaleString('es-MX')} registrados para ${qrClienteNombre}. Ganancia: $${ganancia.toLocaleString('es-MX', {minimumFractionDigits:2})}.`);
     showToast('✅ Venta registrada · $' + totalVenta.toLocaleString('es-MX'));
 
   } catch (e) {
@@ -2483,10 +2463,25 @@ function calcularNivel(puntos) {
 }
 
 /* ════════════════════════════
-   INIT
+   INIT EVENT LISTENERS
 ════════════════════════════ */
-initFirestoreListeners();
-renderMercancias();
+document.addEventListener('DOMContentLoaded', () => {
+  initFirestoreListeners();
+  
+  // Listeners para Inputs
+  const inpCanjear = document.getElementById('canjear-input');
+  if(inpCanjear){
+    inpCanjear.addEventListener('keydown', e => { if(e.key==='Enter') validarCodigo(); });
+    inpCanjear.addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
+  }
+
+  const inpQR = document.getElementById('qr-codigo-input');
+  if(inpQR){
+    inpQR.addEventListener('keydown', e => { if(e.key==='Enter') validarCodigoCliente(); });
+    inpQR.addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
+  }
+});
+
 </script>
 </body>
 </html>
