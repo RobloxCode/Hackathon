@@ -1,0 +1,9 @@
+
+functions/.env
+functions/.env.*
+.env
+firebase_credentials.json
+functions/node_modules/
+.firebase/
+
+keys.js
