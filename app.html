@@ -4,12 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tesoros de Morelia - App Cliente</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
     <style>
-        /* PALETA DE COLORES */
         :root {
             --rojo-vino: #7F2020;
             --verde-salvia: #869B7E;
@@ -17,72 +13,59 @@
             --hueso: #F6F3EB;
             --texto-oscuro: #2c3e50;
         }
-
+        * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--hueso); color: var(--texto-oscuro); padding-bottom: 70px; }
-        
-        /* ENCABEZADO */
-        .header { 
-            background-color: var(--rojo-vino); padding: 25px; text-align: center; color: white; 
-            border-bottom: 6px solid var(--verde-salvia); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
+        .header { background-color: var(--rojo-vino); padding: 25px; text-align: center; color: white; border-bottom: 6px solid var(--verde-salvia); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .header h1 { margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: 2px; }
-        .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
-
-        /* TABS (VISTAS) */
+        .header p  { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
         .vista { display: none; animation: fadeIn 0.3s; }
         .vista.activa { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* MAPA Y FILTROS */
-        #mapa-container { height: 350px; width: 100%; border-bottom: 4px solid var(--oliva-claro); z-index: 1; }
-        .filtros { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
-        .btn-filtro { background: white; border: 2px solid var(--oliva-claro); padding: 8px 18px; border-radius: 20px; cursor: pointer; color: var(--verde-salvia); font-weight: bold; transition: 0.3s; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        #mapa-container { height: 300px; width: 100%; border-bottom: 4px solid var(--oliva-claro); z-index: 1; }
+        .filtros { display: flex; justify-content: center; gap: 8px; padding: 14px 12px; background: white; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.06); flex-wrap: wrap; }
+        .btn-filtro { background: white; border: 2px solid var(--oliva-claro); padding: 7px 16px; border-radius: 20px; cursor: pointer; color: var(--verde-salvia); font-weight: bold; font-size: 13px; transition: 0.25s; }
         .btn-filtro.active { background: var(--rojo-vino); color: white; border-color: var(--rojo-vino); }
-
-        /* GRID MASONRY */
         .masonry-grid { columns: 3; column-gap: 20px; padding: 25px; max-width: 1200px; margin: 0 auto; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.06); display: inline-block; width: 100%; margin-bottom: 20px; break-inside: avoid; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(127, 32, 32, 0.15); }
-        .card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(127,32,32,0.15); }
+        .card.oculta { display: none; }
+        .card-img-wrap { width: 100%; height: 180px; overflow: hidden; position: relative; background: var(--hueso); }
+        .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+        .card:hover .card-img-wrap img { transform: scale(1.05); }
+        .card-img-wrap .card-emoji-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; background: var(--hueso); }
         .card-content { padding: 18px; }
-        .card-content h3 { margin: 0; font-size: 19px; color: var(--rojo-vino); }
-        .categoria { font-size: 12px; color: var(--verde-salvia); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-        .promo-tag { background-color: var(--oliva-claro); color: var(--rojo-vino); padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; margin: 12px 0; display: inline-block; }
-        
+        .card-content h3 { margin: 0; font-size: 18px; color: var(--rojo-vino); }
+        .categoria-label { font-size: 12px; color: var(--verde-salvia); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        .promo-tag { background-color: var(--oliva-claro); color: var(--rojo-vino); padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; margin: 10px 0; display: inline-block; }
         .card-actions { display: flex; gap: 10px; margin-top: 10px; }
         .btn { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; text-align: center; text-decoration: none; font-size: 13px; transition: 0.3s; }
-        .btn-mapa { background-color: var(--verde-salvia); color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-mapa  { background-color: var(--verde-salvia); color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-claim { background-color: var(--rojo-vino); color: white; }
-
-        /* LISTA DE VISITAS (HISTORIAL) */
         .historial-container { padding: 20px; max-width: 800px; margin: 0 auto; }
-        .visita-item { background: white; border: 2px solid var(--oliva-claro); border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
-        .visita-icon { font-size: 30px; background: var(--hueso); padding: 10px; border-radius: 50%; }
-        .visita-info h4 { margin: 0; color: var(--rojo-vino); font-size: 18px; }
-        .visita-info p { margin: 5px 0 0 0; font-size: 13px; color: var(--verde-salvia); }
-        .visita-pts { margin-left: auto; font-weight: bold; color: var(--verde-salvia); background: #eef2ec; padding: 5px 10px; border-radius: 20px; }
-
-        /* BOTTOM NAV BAR */
+        .historial-container h2 { color: var(--rojo-vino); margin-bottom: 4px; }
+        .historial-container > p { color: var(--verde-salvia); font-size: 14px; margin: 0 0 18px; }
+        .visita-item { background: white; border: 2px solid var(--oliva-claro); border-radius: 12px; padding: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 15px; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+        .visita-icon { font-size: 30px; background: var(--hueso); padding: 10px; border-radius: 50%; flex-shrink: 0; }
+        .visita-info h4 { margin: 0; color: var(--rojo-vino); font-size: 17px; }
+        .visita-info p  { margin: 4px 0 0 0; font-size: 13px; color: var(--verde-salvia); }
+        .visita-pts { margin-left: auto; font-weight: bold; color: var(--verde-salvia); background: #eef2ec; padding: 5px 12px; border-radius: 20px; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; border-top: 2px solid var(--oliva-claro); }
         .nav-item { background: none; border: none; flex: 1; font-size: 12px; color: var(--texto-oscuro); font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
         .nav-item.active { color: var(--rojo-vino); }
         .nav-icon { font-size: 24px; }
-
-        /* MODAL DEL QR */
-        #cupon-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.85); z-index: 9999; justify-content: center; align-items: center; }
+        #cupon-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44,62,80,0.85); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content { background: var(--hueso); padding: 30px; border-radius: 15px; text-align: center; max-width: 320px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 4px solid var(--rojo-vino); }
         .modal-content h2 { margin-top: 0; color: var(--rojo-vino); font-size: 24px; }
-        #qr-generado { display: flex; justify-content: center; margin: 20px 0; padding: 15px; background: white; border-radius: 12px; border: 2px dashed var(--oliva-claro); }
-        .codigo-gigante { font-size: 24px; color: var(--verde-salvia); font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; }
-        .btn-close { background-color: var(--texto-oscuro); color: white; width: 100%; margin-top: 15px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;}
-
+        .codigo-gigante { font-size: 38px; color: var(--verde-salvia); font-weight: 900; letter-spacing: 8px; margin-bottom: 10px; }
+        .btn-close { background-color: var(--texto-oscuro); color: white; width: 100%; margin-top: 15px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .empty-hist { text-align: center; padding: 40px 20px; color: var(--verde-salvia); }
+        .empty-hist .ei-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-hist p { font-size: 15px; }
         @media (max-width: 900px) { .masonry-grid { columns: 2; } }
-        @media (max-width: 600px) { .masonry-grid { columns: 1; padding: 15px; } #mapa-container { height: 250px; } }
+        @media (max-width: 600px) { .masonry-grid { columns: 1; padding: 15px; } #mapa-container { height: 240px; } }
     </style>
 </head>
-
 <body>
-
     <div class="header">
         <h1>Tesoros de Morelia</h1>
         <p>Vive la tradición. Consume local.</p>
@@ -91,143 +74,152 @@
     <div id="vista-catalogo" class="vista activa">
         <div id="mapa-container"></div>
         <div class="filtros">
-            <button class="btn-filtro active">Todos</button>
-            <button class="btn-filtro">Gastronomía</button>
-            <button class="btn-filtro">Artesanías</button>
-            <button class="btn-filtro">Servicios</button>
+            <button class="btn-filtro active"  onclick="filtrar('Todos',this)">Todos</button>
+            <button class="btn-filtro"          onclick="filtrar('Gastronomia',this)">Gastronomía</button>
+            <button class="btn-filtro"          onclick="filtrar('Artesanias',this)">Artesanías</button>
+            <button class="btn-filtro"          onclick="filtrar('Servicios',this)">Servicios</button>
         </div>
         <div class="masonry-grid" id="catalogo"></div>
     </div>
 
     <div id="vista-visitas" class="vista">
         <div class="historial-container">
-            <h2 style="color: var(--rojo-vino);">Mi Historial</h2>
+            <h2>Mi Historial</h2>
             <p>Lugares que has visitado y promos canjeadas.</p>
             <div id="lista-historial">
-                <p style="text-align: center; color: var(--verde-salvia);">Cargando tu historial...</p>
+                <p style="text-align:center; color:var(--verde-salvia);">Cargando...</p>
             </div>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <button class="nav-item active" onclick="cambiarVista('catalogo', this)">
-            <span class="nav-icon">🏪</span>
-            Explorar
-        </button>
-        <button class="nav-item" onclick="cambiarVista('visitas', this)">
-            <span class="nav-icon">📜</span>
-            Mis Visitas
-        </button>
-        <button class="nav-item" onclick="cerrarSesion()">
-            <span class="nav-icon">🚪</span>
-            Salir
-        </button>
+        <button class="nav-item active" onclick="cambiarVista('catalogo',this)"><span class="nav-icon">&#127978;</span>Explorar</button>
+        <button class="nav-item"        onclick="cambiarVista('visitas',this)"><span class="nav-icon">&#128220;</span>Mis Visitas</button>
+        <button class="nav-item"        onclick="cerrarSesion()"><span class="nav-icon">&#128682;</span>Salir</button>
     </div>
 
     <div id="cupon-modal">
         <div class="modal-content">
-            <h2>Muestra este QR</h2>
-            <p style="color: var(--texto-oscuro);">En la caja de <br><strong id="modal-negocio" style="color: var(--rojo-vino); font-size: 1.2em;"></strong></p>
-            
-            <div id="qr-generado"></div>
-            
-            <div class="codigo-gigante" id="modal-codigo"></div>
-            <p style="font-size: 13px; color: var(--verde-salvia); font-weight: bold;">El cajero escaneará esto para registrar tu visita y promo.</p>
+            <h2>Tu código de compra</h2>
+            <p style="color:var(--texto-oscuro);">Muéstrale este código al cajero de<br>
+                <strong id="modal-negocio" style="color:var(--rojo-vino);font-size:1.2em;"></strong></p>
+            <div style="background:white;border-radius:16px;border:2px dashed var(--oliva-claro);padding:28px 20px;margin:20px 0;text-align:center;">
+                <p style="font-size:12px;color:var(--verde-salvia);font-weight:bold;margin:0 0 10px 0;text-transform:uppercase;letter-spacing:2px;">Código único</p>
+                <div class="codigo-gigante" id="modal-codigo"></div>
+                <p style="font-size:11px;color:#aaa;margin:12px 0 0 0;">El cajero tecleará este código en su sistema</p>
+            </div>
+            <p style="font-size:13px;color:var(--verde-salvia);font-weight:bold;margin:0;">Un solo uso · Válido 30 min</p>
             <button class="btn-close" onclick="cerrarModal()">Cerrar</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script>
-        // --- CONTROL DE VISTAS (TABS) ---
-        function cambiarVista(vista, btnElement) {
-            document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById('vista-' + vista).classList.add('activa');
-            btnElement.classList.add('active');
-            
-            // Si regresa al mapa, hay que redibujarlo para que no se rompa el tamaño
-            if(vista === 'catalogo') { setTimeout(() => map.invalidateSize(), 100); }
-        }
-
-        // --- MAPA Y CATÁLOGO ---
-        const map = L.map('mapa-container').setView([19.7027, -101.1923], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        // OJO AQUÍ: Agregué los IDs reales de la base de datos (NEG_01, NEG_02, etc.)
-        const negocios = [
-            { id: "NEG_01", nombre: "Gazpachos El Boulevard", categoria: "Gastronomía", promo: "10% de descuento en mediano", lat: 19.7042, lng: -101.1915, img: "https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=500&q=80", icono: "🍹" },
-            { id: "NEG_02", nombre: "Café de las Rosas", categoria: "Gastronomía", promo: "Café de olla gratis", lat: 19.7055, lng: -101.1940, img: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80", icono: "☕" },
-            { id: "NEG_03", nombre: "Artesanías Don Vasco", categoria: "Artesanías", promo: "Llavero artesanal de regalo", lat: 19.7015, lng: -101.1930, img: "https://images.unsplash.com/photo-1606041011872-5965904f40d4?w=500&q=80", icono: "🏺" },
-            { id: "NEG_04", nombre: "Tacos El Güero", categoria: "Gastronomía", promo: "3x2 en tacos de pastor", lat: 19.7065, lng: -101.1890, img: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=500&q=80", icono: "🌮" },
-            { id: "NEG_05", nombre: "Hotel Virrey de Mendoza", categoria: "Servicios", promo: "15% en tu primera noche", lat: 19.7025, lng: -101.1950, img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=80", icono: "🏨" },
-            { id: "NEG_06", nombre: "Museo Casa de Morelos", categoria: "Servicios", promo: "Entrada 2x1 a estudiantes", lat: 19.7010, lng: -101.1900, img: "https://images.unsplash.com/photo-1582559937958-6933cceac135?w=500&q=80", icono: "🏛️" }
+        /* ── NEGOCIOS ── */
+        var negocios = [
+            { id:"NEG_01", nombre:"Gazpachos El Boulevard", cat:"Gastronomia", catLabel:"Gastronomía", promo:"10% de descuento en mediano",
+              lat:19.7042, lng:-101.1915, icono:"🍹",
+              img:"https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=600&q=80" },
+            { id:"NEG_02", nombre:"Café de las Rosas",      cat:"Gastronomia", catLabel:"Gastronomía", promo:"Café de olla gratis",
+              lat:19.7055, lng:-101.1940, icono:"☕",
+              img:"https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80" },
+            { id:"NEG_03", nombre:"Artesanías Don Vasco",   cat:"Artesanias",  catLabel:"Artesanías",  promo:"Llavero artesanal de regalo",
+              lat:19.7015, lng:-101.1930, icono:"🏺",
+              img:"https://images.unsplash.com/photo-1519697253246-7e84e31e04a6?w=600&q=80" },
+            { id:"NEG_04", nombre:"Tacos El Güero",         cat:"Gastronomia", catLabel:"Gastronomía", promo:"3x2 en tacos de pastor",
+              lat:19.7065, lng:-101.1890, icono:"🌮",
+              img:"https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=600&q=80" },
+            { id:"NEG_05", nombre:"Hotel Virrey de Mendoza",cat:"Servicios",   catLabel:"Servicios",   promo:"15% en tu primera noche",
+              lat:19.7025, lng:-101.1950, icono:"🏨",
+              img:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80" },
+            { id:"NEG_06", nombre:"Museo Casa de Morelos",  cat:"Servicios",   catLabel:"Servicios",   promo:"Entrada 2x1 a estudiantes",
+              lat:19.7010, lng:-101.1900, icono:"🏛️",
+              img:"https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&q=80" }
         ];
 
-        const container = document.getElementById('catalogo');
+        /* ── MAPA ── */
+        var map = L.map('mapa-container').setView([19.7027, -101.1923], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        negocios.forEach(n => {
-            const marker = L.marker([n.lat, n.lng]).addTo(map);
-            marker.bindPopup(`<b>${n.nombre}</b><br>${n.promo}`);
-
-            const card = document.createElement('div');
+        /* ── CARDS ── */
+        var container = document.getElementById('catalogo');
+        negocios.forEach(function(n) {
+            L.marker([n.lat, n.lng]).addTo(map).bindPopup('<b>' + n.nombre + '</b><br>' + n.promo);
+            var card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `
-                <img src="${n.img}" alt="${n.nombre}">
-                <div class="card-content">
-                    <span class="categoria">${n.categoria}</span>
-                    <h3>${n.nombre}</h3>
-                    <div class="promo-tag">${n.promo}</div>
-                    
-                    <div class="card-actions">
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${n.lat},${n.lng}" target="_blank" class="btn btn-mapa">
-                            🗺️ Ruta
-                        </a>
-                        <button class="btn btn-claim" onclick="solicitarPromo('${n.id}', '${n.nombre}')">Canjear</button>
-                    </div>
-                </div>
-            `;
+            card.setAttribute('data-cat', n.cat);
+            var imgHtml = n.img
+                ? '<div class="card-img-wrap"><img src="' + n.img + '" alt="' + n.nombre + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="card-emoji-fallback" style="display:none">' + n.icono + '</div></div>'
+                : '<div class="card-img-wrap"><div class="card-emoji-fallback">' + n.icono + '</div></div>';
+            card.innerHTML =
+                imgHtml +
+                '<div class="card-content">' +
+                    '<span class="categoria-label">' + n.icono + ' ' + n.catLabel + '</span>' +
+                    '<h3>' + n.nombre + '</h3>' +
+                    '<div class="promo-tag">' + n.promo + '</div>' +
+                    '<div class="card-actions">' +
+                        '<a href="https://www.google.com/maps/dir/?api=1&destination=' + n.lat + ',' + n.lng + '" target="_blank" class="btn btn-mapa">&#128506; Ruta</a>' +
+                        '<button class="btn btn-claim" onclick="solicitarPromo(\'' + n.id + '\',\'' + n.nombre.replace(/'/g,"\\'") + '\',\'' + n.promo.replace(/'/g,"\\'") + '\',\'' + n.icono + '\')">Canjear</button>' +
+                    '</div>' +
+                '</div>';
             container.appendChild(card);
         });
 
-        function cerrarModal() {
-            document.getElementById('cupon-modal').style.display = 'none';
+        /* ── FILTROS ── */
+        function filtrar(cat, btn) {
+            document.querySelectorAll('.btn-filtro').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('#catalogo .card').forEach(function(c){
+                c.classList.toggle('oculta', cat !== 'Todos' && c.getAttribute('data-cat') !== cat);
+            });
         }
+
+        /* ── VISTAS ── */
+        function cambiarVista(vista, btn) {
+            document.querySelectorAll('.vista').forEach(function(v){ v.classList.remove('activa'); });
+            document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
+            document.getElementById('vista-' + vista).classList.add('activa');
+            btn.classList.add('active');
+            if (vista === 'catalogo') setTimeout(function(){ map.invalidateSize(); }, 100);
+        }
+
+        function cerrarModal() { document.getElementById('cupon-modal').style.display = 'none'; }
     </script>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, orderBy, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut }
+            from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs,
+                 getDoc, doc, setDoc, addDoc, serverTimestamp }
+            from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
-            authDomain: "hackathon-c1121.firebaseapp.com",
-            projectId: "hackathon-c1121",
-            storageBucket: "hackathon-c1121.firebasestorage.app",
+            apiKey:            "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
+            authDomain:        "hackathon-c1121.firebaseapp.com",
+            projectId:         "hackathon-c1121",
+            storageBucket:     "hackathon-c1121.firebasestorage.app",
             messagingSenderId: "794762493985",
-            appId: "1:794762493985:web:6f3c9dfef332f1f34ea360"
+            appId:             "1:794762493985:web:6f3c9dfef332f1f34ea360"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const fbApp = initializeApp(firebaseConfig);
+        const auth  = getAuth(fbApp);
+        const db    = getFirestore(fbApp);
 
-        let usuarioActual = null;
+        let usuarioActual  = null;
         let nombreCompleto = "Turista";
 
-        // VERIFICAR SESIÓN
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 usuarioActual = user;
-                // Obtenemos su nombre para que el QR lo lleve incrustado
-                const docUsuario = await getDoc(doc(db, "usuarios", user.uid));
-                if(docUsuario.exists()) {
-                    const datos = docUsuario.data();
-                    nombreCompleto = datos.nombre + " " + datos.apellido;
-                }
+                try {
+                    const snap = await getDoc(doc(db, "usuarios", user.uid));
+                    if (snap.exists()) {
+                        const d = snap.data();
+                        nombreCompleto = ((d.nombre||'') + ' ' + (d.apellido||'')).trim();
+                    }
+                } catch(e) { console.warn(e); }
                 cargarHistorial(user.uid);
             } else {
                 alert("Debes iniciar sesión para explorar el catálogo.");
@@ -235,86 +227,102 @@
             }
         });
 
-        // GENERAR EL QR Y ABRIR MODAL
-        window.solicitarPromo = function(idNegocio, nombreNegocio) {
-            if(!usuarioActual) {
-                alert("Inicia sesión primero");
-                return;
-            }
+        /* ── GENERAR CÓDIGO Y GUARDAR EN FIREBASE ── */
+        window.solicitarPromo = async function(idNegocio, nombreNegocio, promoTexto, icono) {
+            if (!usuarioActual) { alert("Inicia sesión primero"); return; }
 
-            const codigoAlfanumerico = Math.random().toString(36).substring(2, 7).toUpperCase();
-            
-            // Llenamos los textos del modal
+            const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
             document.getElementById('modal-negocio').innerText = nombreNegocio;
-            document.getElementById('modal-codigo').innerText = codigoAlfanumerico;
-            
-            // CREAMOS LOS DATOS QUE VAN DENTRO DEL QR (El vendedor leerá esto)
-            // Formato: ID_CLIENTE | ID_NEGOCIO | NOMBRE_CLIENTE | CODIGO
-            const payloadQR = `${usuarioActual.uid}|${idNegocio}|${nombreCompleto}|${codigoAlfanumerico}`;
-
-            // Limpiamos y dibujamos el código QR
-            const contenedorQR = document.getElementById("qr-generado");
-            contenedorQR.innerHTML = "";
-            new QRCode(contenedorQR, {
-                text: payloadQR,
-                width: 180,
-                height: 180,
-                colorDark : "#2c3e50",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
+            document.getElementById('modal-codigo').innerText  = codigo;
             document.getElementById('cupon-modal').style.display = 'flex';
-        };
-
-        // CARGAR EL HISTORIAL DE COMPRAS/VISITAS DEL CLIENTE
-        async function cargarHistorial(uid) {
-            const q = query(
-                collection(db, "visitas"), 
-                where("id_cliente", "==", uid),
-                orderBy("fecha", "desc")
-            );
 
             try {
-                const querySnapshot = await getDocs(q);
-                const listaHTML = document.getElementById('lista-historial');
-                listaHTML.innerHTML = "";
+                // Código para que el vendedor lo valide
+                await setDoc(doc(db, "codigos_venta", codigo), {
+                    uid:       usuarioActual.uid,
+                    nombre:    nombreCompleto,
+                    negocioId: idNegocio,
+                    negocio:   nombreNegocio,
+                    ts:        serverTimestamp(),
+                    usado:     false
+                });
 
-                if (querySnapshot.empty) {
-                    listaHTML.innerHTML = "<p style='text-align:center;'>Aún no has visitado ningún lugar. ¡Explora el catálogo!</p>";
+                // Entrada en historial del cliente
+                await addDoc(collection(db, "visitas"), {
+                    id_cliente: usuarioActual.uid,
+                    negocioId:  idNegocio,
+                    negocio:    nombreNegocio,
+                    promo:      promoTexto,
+                    icono:      icono,
+                    codigo:     codigo,
+                    estado:     "pendiente",
+                    fecha:      serverTimestamp()
+                });
+
+                cargarHistorial(usuarioActual.uid);
+            } catch(e) {
+                console.error("Error al generar código:", e);
+            }
+        };
+
+        /* ── HISTORIAL ─────────────────────────────────────────────
+           IMPORTANTE: Solo filtramos por id_cliente (sin orderBy)
+           para evitar necesitar un índice compuesto en Firestore.
+           Ordenamos por fecha en el cliente (JS).
+        ── */
+        async function cargarHistorial(uid) {
+            const listaEl = document.getElementById('lista-historial');
+            listaEl.innerHTML = "<p style='text-align:center;color:var(--verde-salvia);'>Cargando...</p>";
+            try {
+                const q    = query(collection(db, "visitas"), where("id_cliente", "==", uid));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    listaEl.innerHTML =
+                        '<div class="empty-hist"><div class="ei-icon">🗺️</div>' +
+                        '<p>¡Aún no has canjeado ninguna promo!<br>Explora el catálogo y presiona <strong>Canjear</strong>.</p></div>';
                     return;
                 }
 
-                querySnapshot.forEach((documento) => {
-                    const visita = documento.data();
-                    // Extraemos la fecha bonita
-                    const fechaObj = new Date(visita.fecha);
-                    const fechaStr = fechaObj.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' });
+                // Ordenar por fecha descendente en JS (sin índice Firestore)
+                var docs = [];
+                snap.forEach(function(d){ docs.push(d.data()); });
+                docs.sort(function(a, b){
+                    var fa = a.fecha && a.fecha.toDate ? a.fecha.toDate().getTime() : 0;
+                    var fb = b.fecha && b.fecha.toDate ? b.fecha.toDate().getTime() : 0;
+                    return fb - fa;
+                });
 
-                    listaHTML.innerHTML += `
-                        <div class="visita-item">
-                            <div class="visita-icon">🛍️</div>
-                            <div class="visita-info">
-                                <h4>Visita Registrada</h4>
-                                <p>${fechaStr}</p>
-                            </div>
-                            <div class="visita-pts">
-                                ✓ Canjeado
-                            </div>
-                        </div>
-                    `;
+                listaEl.innerHTML = "";
+                docs.forEach(function(v) {
+                    var fecha = (v.fecha && v.fecha.toDate)
+                        ? v.fecha.toDate().toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+                        : "—";
+                    var estado = v.estado || "pendiente";
+                    var badge  = estado === "canjeado"
+                        ? '<span style="color:var(--verde-salvia);font-weight:bold;">&#10003; Canjeado</span>'
+                        : '<span style="color:var(--oliva-claro);font-weight:bold;">&#9203; Pendiente</span>';
+
+                    listaEl.innerHTML +=
+                        '<div class="visita-item">' +
+                            '<div class="visita-icon">' + (v.icono||'🛍️') + '</div>' +
+                            '<div class="visita-info">' +
+                                '<h4>' + (v.negocio||'Local') + '</h4>' +
+                                '<p>' + (v.promo||'') + '</p>' +
+                                '<p style="font-size:11px;margin-top:3px;color:#aaa;">' + fecha + '</p>' +
+                            '</div>' +
+                            '<div class="visita-pts">' + badge + '</div>' +
+                        '</div>';
                 });
             } catch(e) {
-                console.error("Error al cargar historial: ", e);
-                document.getElementById('lista-historial').innerHTML = "<p>Hubo un error al cargar tu historial.</p>";
+                console.error("Error historial:", e);
+                listaEl.innerHTML = "<p style='text-align:center;'>No se pudo cargar el historial.</p>";
             }
         }
 
         window.cerrarSesion = function() {
-            signOut(auth).then(() => {
-                window.location.href = "auth.html";
-            });
-        }
+            signOut(auth).then(function(){ window.location.href = "auth.html"; });
+        };
     </script>
 </body>
 </html>
