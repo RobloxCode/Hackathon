@@ -3,190 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso - Red Local Morelia</title>
+    <title>Acceso - Tesoros de Morelia</title>
     <style>
-        :root { --rojo-vino: #7F2020; --verde-salvia: #869B7E; --oliva-claro: #C9CAAC; --hueso: #F6F3EB; }
+        :root { 
+            --rojo-vino: #7F2020; 
+            --verde-salvia: #869B7E; 
+            --oliva-claro: #C9CAAC; 
+            --hueso: #F6F3EB; 
+        }
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--hueso); display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; gap: 16px; }
-        .auth-box { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 8px 25px rgba(127,32,32,0.15); width: 100%; max-width: 360px; text-align: center; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--hueso); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .auth-box { 
+            background: white; 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(127,32,32,0.15); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+        }
         h2 { color: var(--rojo-vino); margin-bottom: 5px; }
-        p  { color: var(--verde-salvia); font-size: 14px; margin-top: 0; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid var(--oliva-claro); border-radius: 6px; font-size: 14px; background: #fafafa; outline: none; transition: border-color 0.3s; }
-        input:focus, select:focus { border-color: var(--verde-salvia); }
-        .btn { background-color: var(--rojo-vino); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 12px; font-weight: bold; transition: background-color 0.3s; }
-        .btn:hover { background-color: #5c1616; }
-        .btn-outline { background: transparent; color: var(--rojo-vino); border: 2px solid var(--rojo-vino); margin-top: 12px; }
-        .btn-outline:hover { background-color: var(--rojo-vino); color: white; }
-        .msg { display: none; font-size: 14px; margin-top: 12px; font-weight: bold; padding: 10px; border-radius: 6px; }
-        .error   { color: #c0392b; background: #fadbd8; }
-        .success { color: #27ae60; background: #d5f5e3; }
-        .hidden  { display: none; }
-        hr { margin: 18px 0; border: 0; border-top: 1px solid #eee; }
+        p { color: var(--verde-salvia); font-size: 14px; margin-top: 0; }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+        }
+        .btn-primario { 
+            width: 100%; 
+            padding: 12px; 
+            background-color: var(--rojo-vino); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px; 
+        }
+        .toggle-link { 
+            color: var(--verde-salvia); 
+            cursor: pointer; 
+            font-size: 13px; 
+            display: block; 
+            margin-top: 15px; 
+            text-decoration: underline; 
+        }
+        #msgStatus { margin-top: 15px; font-size: 14px; font-weight: bold; }
+        .error { color: #d9534f; }
+        .success { color: #5cb85c; }
 
-        /* Contacto discreto */
-        .contacto-texto { text-align: center; font-size: 12px; color: #bbb; }
-        .contacto-texto a { color: #aaa; text-decoration: none; transition: color 0.2s; }
-        .contacto-texto a:hover { color: var(--rojo-vino); }
+        /* Sección de Contacto */
+        .contact-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #777;
+            line-height: 1.5;
+        }
+        .contact-info a { color: var(--rojo-vino); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- ===== LOGIN ===== -->
     <div class="auth-box">
-        <h2 id="titulo">Iniciar Sesión</h2>
-        <p  id="subtitulo">Ingresa con tu correo y contraseña.</p>
-        <div id="campos-registro" class="hidden">
-            <input type="text" id="nombre"   placeholder="Nombre(s)">
-            <input type="text" id="apellido" placeholder="Apellidos">
+        <h2 id="authTitle">Iniciar Sesión</h2>
+        <p id="authDesc">Panel de Acceso Local</p>
+
+        <form id="authForm">
+            <input type="email" id="email" placeholder="Correo electrónico" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            
+            <div id="registroExtra" style="display:none;">
+                <input type="text" id="nombre" placeholder="Nombre completo o Negocio">
+                <select id="rol">
+                    <option value="turista">Soy Turista / Cliente</option>
+                    <option value="admin">Soy Socio / Vendedor</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primario" id="btnAccion">Entrar</button>
+        </form>
+
+        <span class="toggle-link" id="toggleAuth">¿No tienes cuenta? Regístrate aquí</span>
+        
+        <div id="msgStatus"></div>
+
+        <div class="contact-info">
+            ¿Necesitas ayuda con tu cuenta?<br>
+            <b>Soporte Técnico:</b> <a href="mailto:soporte@tesorosmorelia.com">soporte@tesorosmorelia.com</a><br>
+            <b>WhatsApp:</b> +52 443 123 4567
         </div>
-        <input type="email"    id="correo"   placeholder="Correo electrónico">
-        <input type="password" id="password" placeholder="Contraseña">
-        <select id="rol-registro" class="hidden">
-            <option value="turista">Soy Turista / Comprador</option>
-            <option value="admin">Soy Dueño de Negocio</option>
-        </select>
-        <button id="btn-accion" class="btn">Entrar</button>
-        <p id="msg-status" class="msg"></p>
-        <hr>
-        <button id="btn-toggle" class="btn btn-outline">¿No tienes cuenta? Regístrate</button>
     </div>
 
-    <!-- ===== CONTACTO DISCRETO ===== -->
-    <p class="contacto-texto">
-        ¿Necesitas ayuda? Contáctanos en
-        <a href="mailto:contacto@tesorosdemorelia.mx">contacto@tesorosdemorelia.mx</a>
-    </p>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script type="module">
-    import { initializeApp }                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword,
-             signInWithEmailAndPassword }                 from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc }          from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // Tu configuración de Firebase proporcionada
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
+            authDomain: "hackathon-c1121.firebaseapp.com",
+            projectId: "hackathon-c1121",
+            storageBucket: "hackathon-c1121.firebasestorage.app",
+            messagingSenderId: "794762493985",
+            appId: "1:794762493985:web:6f3c9dfef332f1f34ea360",
+            measurementId: "G-DGSZRMG33B"
+        };
 
-    const firebaseConfig = {
-        apiKey:            "AIzaSyAqpIaJI-C_96hQnV4ji1XypPpC85w25BI",
-        authDomain:        "hackathon-c1121.firebaseapp.com",
-        projectId:         "hackathon-c1121",
-        storageBucket:     "hackathon-c1121.firebasestorage.app",
-        messagingSenderId: "794762493985",
-        appId:             "1:794762493985:web:6f3c9dfef332f1f34ea360",
-        measurementId:     "G-DGSZRMG33B"
-    };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    const fbApp = initializeApp(firebaseConfig);
-    const auth  = getAuth(fbApp);
-    const db    = getFirestore(fbApp);
+        // Mapa de archivos según usuario (Imagen proporcionada)
+        const VENDEDOR_MAP = {
+            "gazpachos@morelia.com": "vendedor_NEG_01.html",
+            "rosas@morelia.com": "vendedor_NEG_02.html",
+            "artesanias@morelia.com": "vendedor_NEG_03.html",
+            "tacos@morelia.com": "vendedor_NEG_04.html",
+            "mendoza@morelia.com": "vendedor_NEG_05.html",
+            "morelos@morelia.com": "vendedor_NEG_06.html"
+        };
 
-    const VENDEDOR_MAP = {
-        "gaspachosboulevard@gmail.com": "vendedor_NEG_01.html",
-        "cafedelasrosas@gmail.com":     "vendedor_NEG_02.html",
-        "artesaniasdonvasco@gmail.com": "vendedor_NEG_03.html",
-        "tacosElguero@gmail.com":       "vendedor_NEG_04.html",
-        "hotelvirrey@gmail.com":        "vendedor_NEG_05.html",
-        "museocasademorelos@gmail.com": "vendedor_NEG_06.html"
-    };
+        const authForm = document.getElementById('authForm');
+        const toggleAuth = document.getElementById('toggleAuth');
+        const registroExtra = document.getElementById('registroExtra');
+        const authTitle = document.getElementById('authTitle');
+        const btnAccion = document.getElementById('btnAccion');
+        const msgStatus = document.getElementById('msgStatus');
 
-    const NEGOCIO_DATA = {
-        "gaspachosboulevard@gmail.com": { negocioId:"NEG_01", negocioNombre:"Gazpachos El Boulevard" },
-        "cafedelasrosas@gmail.com":     { negocioId:"NEG_02", negocioNombre:"Café de las Rosas" },
-        "artesaniasdonvasco@gmail.com": { negocioId:"NEG_03", negocioNombre:"Artesanías Don Vasco" },
-        "tacosElguero@gmail.com":       { negocioId:"NEG_04", negocioNombre:"Tacos El Güero" },
-        "hotelvirrey@gmail.com":        { negocioId:"NEG_05", negocioNombre:"Hotel Virrey de Mendoza" },
-        "museocasademorelos@gmail.com": { negocioId:"NEG_06", negocioNombre:"Museo Casa de Morelos" }
-    };
+        let modoRegistro = false;
 
-    let modo = 'login';
-    const titulo      = document.getElementById('titulo');
-    const subtitulo   = document.getElementById('subtitulo');
-    const camposReg   = document.getElementById('campos-registro');
-    const selectorRol = document.getElementById('rol-registro');
-    const btnAccion   = document.getElementById('btn-accion');
-    const btnToggle   = document.getElementById('btn-toggle');
-    const msgStatus   = document.getElementById('msg-status');
+        toggleAuth.addEventListener('click', () => {
+            modoRegistro = !modoRegistro;
+            authTitle.innerText = modoRegistro ? 'Crear Cuenta' : 'Iniciar Sesión';
+            btnAccion.innerText = modoRegistro ? 'Registrarse' : 'Entrar';
+            registroExtra.style.display = modoRegistro ? 'block' : 'none';
+            toggleAuth.innerText = modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
+        });
 
-    btnToggle.addEventListener('click', () => {
-        msgStatus.style.display = 'none';
-        if (modo === 'login') {
-            modo = 'registro';
-            titulo.innerText    = 'Crear Cuenta';
-            subtitulo.innerText = 'Únete para obtener o crear promociones.';
-            camposReg.classList.remove('hidden');
-            selectorRol.classList.remove('hidden');
-            btnAccion.innerText = 'Registrarme';
-            btnToggle.innerText = '¿Ya tienes cuenta? Inicia sesión';
-        } else {
-            modo = 'login';
-            titulo.innerText    = 'Iniciar Sesión';
-            subtitulo.innerText = 'Ingresa con tu correo y contraseña.';
-            camposReg.classList.add('hidden');
-            selectorRol.classList.add('hidden');
-            btnAccion.innerText = 'Entrar';
-            btnToggle.innerText = '¿No tienes cuenta? Regístrate';
-        }
-    });
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            
+            msgStatus.innerText = 'Cargando...';
+            msgStatus.className = '';
 
-    btnAccion.addEventListener('click', async () => {
-        const email    = document.getElementById('correo').value.trim();
-        const password = document.getElementById('password').value.trim();
-        if (!email || !password) { mostrarMsg('Llena todos los campos.', 'error'); return; }
-
-        try {
-            if (modo === 'registro') {
-                const nombre   = document.getElementById('nombre').value.trim();
-                const apellido = document.getElementById('apellido').value.trim();
-                const rol      = selectorRol.value;
-                if (!nombre || !apellido) { mostrarMsg('Nombre y apellido requeridos.', 'error'); return; }
-
-                const cred    = await createUserWithEmailAndPassword(auth, email, password);
-                const uid     = cred.user.uid;
-                const docData = { nombre, apellido, correo: email, rol };
-                if (rol === 'admin' && NEGOCIO_DATA[email]) {
-                    docData.negocioId     = NEGOCIO_DATA[email].negocioId;
-                    docData.negocioNombre = NEGOCIO_DATA[email].negocioNombre;
+            try {
+                if (modoRegistro) {
+                    const nombre = document.getElementById('nombre').value;
+                    const rol = document.getElementById('rol').value;
+                    
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await setDoc(doc(db, "usuarios", cred.user.uid), {
+                        nombre: nombre,
+                        email: email,
+                        rol: rol,
+                        fecha: new Date().toISOString()
+                    });
+                    
+                    mostrarMsg('Registro exitoso. Redirigiendo...', 'success');
+                    redirigir(rol, email);
+                } else {
+                    const cred = await signInWithEmailAndPassword(auth, email, password);
+                    const snap = await getDoc(doc(db, "usuarios", cred.user.uid));
+                    
+                    if (snap.exists()) {
+                        const userDat = snap.data();
+                        mostrarMsg('Acceso correcto.', 'success');
+                        redirigir(userDat.rol, email);
+                    } else {
+                        mostrarMsg('Error: No hay datos de perfil.', 'error');
+                    }
                 }
-                await setDoc(doc(db, "usuarios", uid), docData);
-                mostrarMsg('¡Registro exitoso!', 'success');
-                redirigir(rol, email);
-
-            } else {
-                const cred = await signInWithEmailAndPassword(auth, email, password);
-                const uid  = cred.user.uid;
-                const snap = await getDoc(doc(db, "usuarios", uid));
-                if (!snap.exists()) { mostrarMsg('Perfil no encontrado. Regístrate primero.', 'error'); return; }
-                const datos = snap.data();
-                mostrarMsg('Entrando...', 'success');
-                redirigir(datos.rol, email);
+            } catch (err) {
+                console.error(err);
+                let txtErr = "Error al intentar entrar.";
+                if (err.code === 'auth/invalid-credential') txtErr = "Usuario o contraseña incorrectos.";
+                if (err.code === 'auth/email-already-in-use') txtErr = "Este correo ya está en uso.";
+                mostrarMsg(txtErr, 'error');
             }
-        } catch(err) {
-            const mensajes = {
-                'auth/user-not-found':       'Usuario no encontrado. Regístrate primero.',
-                'auth/wrong-password':       'Contraseña incorrecta.',
-                'auth/invalid-credential':   'Correo o contraseña incorrectos.',
-                'auth/invalid-email':        'El correo no tiene un formato válido.',
-                'auth/email-already-in-use': 'Este correo ya está registrado.',
-                'auth/weak-password':        'La contraseña debe tener al menos 6 caracteres.',
-                'auth/too-many-requests':    'Demasiados intentos. Espera un momento.',
-            };
-            mostrarMsg(mensajes[err.code] || 'Error: ' + err.message, 'error');
+        });
+
+        function redirigir(rol, email) {
+            setTimeout(() => {
+                if (rol === 'admin') {
+                    // Redirige al archivo específico del mapa o al genérico si no está
+                    const destino = VENDEDOR_MAP[email] || 'vendedor_NEG_01.html';
+                    window.location.href = destino;
+                } else {
+                    window.location.href = 'app.html';
+                }
+            }, 1000);
         }
-    });
 
-    function redirigir(rol, email) {
-        setTimeout(() => {
-            if (rol === 'admin') {
-                const archivo = VENDEDOR_MAP[email] || 'vendedor_NEG_01.html';
-                window.location.href = archivo;
-            } else {
-                window.location.href = 'app.html';
-            }
-        }, 1200);
-    }
-
-    function mostrarMsg(texto, tipo) {
-        msgStatus.innerText     = texto;
-        msgStatus.className     = 'msg ' + tipo;
-        msgStatus.style.display = 'block';
-    }
-</script>
+        function mostrarMsg(texto, tipo) {
+            msgStatus.innerText = texto;
+            msgStatus.className = tipo;
+        }
+    </script>
 </body>
 </html>
